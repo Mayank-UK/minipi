@@ -21,4 +21,16 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    var asteroidRepository: Factory<AsteroidRepository> {
+        /// Scoped and singleton — only one single instance for all injections
+        Factory(self) {
+            AsteroidRepositoryImplementation(
+                apiService: self.apiService(),
+                database: self.database(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
 }

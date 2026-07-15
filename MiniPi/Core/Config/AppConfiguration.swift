@@ -17,6 +17,7 @@ final class AppConfiguration {
 
     let environment: AppEnvironment
     let apiBaseURL: String
+    let nasaApiKey: String
     let useFakeAPI: Bool
     let useFakeDatabase: Bool
 
@@ -41,6 +42,11 @@ final class AppConfiguration {
         apiBaseURL =
             info["API_BASE_URL"] as? String ?? ""
 
+        // NASA NeoWs key from the per-environment xcconfig → Info.plist.
+        // Falls back to NASA's shared DEMO_KEY (rate-limited ~30 req/hr/IP) if missing.
+        nasaApiKey =
+            info["NASA_API_KEY"] as? String ?? "DEMO_KEY"
+
         useFakeAPI =
             (info["USE_FAKE_API"] as? String)?
                 .uppercased() == "YES"
@@ -50,8 +56,8 @@ final class AppConfiguration {
                 .uppercased() == "YES"
 
         // simulation works in dev only
-        apiScenario = .serverError
-        dbScenario = .readError
+        apiScenario = .success
+        dbScenario = .success
 
         appVersion =
             info["CFBundleShortVersionString"] as? String ?? ""

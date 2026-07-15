@@ -19,21 +19,60 @@ class HomeViewModel: ObservableObject {
         self.logger = logger
     }
     
-    let links: [LinkData] = [
+    let scienceLinks: [LinkData] = [
         LinkData(
-            image: "TestImage",
+            image: "nasa",
             title: "NASA NEOs",
             routePath: Router.routePaths.asteroidScreen,
         ),
         LinkData(
-            image: "TestImage",
+            image: "earthquakes",
             title: "USGS Earthquakes",
             routePath: Router.routePaths.earthquakeScreen,
         ),
         LinkData(
-            image: "TestImage",
+            image: "weather",
             title: "Weather",
             routePath: Router.routePaths.weatherScreen,
+        ),
+    ]
+    
+    let financeLinks: [LinkData] = [
+        LinkData(
+            image: "stocks",
+            title: "Stocks",
+            routePath: Router.routePaths.stocks,
+        ),
+        LinkData(
+            image: "forex",
+            title: "Forex",
+            routePath: Router.routePaths.forex,
+        ),
+        LinkData(
+            image: "crypto",
+            title: "Crypto",
+            routePath: Router.routePaths.crypto,
+        ),
+    ]
+    
+    let aiLinks: [LinkData] = [
+        LinkData(
+            image: "ai",
+            title: "AI models",
+            routePath: Router.routePaths.aiModels,
+        ),
+    ]
+    
+    let educationLinks: [LinkData] = [
+        LinkData(
+            image: "indicators",
+            title: "World bank indicators",
+            routePath: Router.routePaths.indicators,
+        ),
+        LinkData(
+            image: "library",
+            title: "Library",
+            routePath: Router.routePaths.library,
         ),
     ]
 }

@@ -37,6 +37,68 @@ class FakeApiService: APIServiceProtocol {
             return self.fakePosts
         }
     }
+
+    func fetchAsteroidFeed(startDate: String, endDate: String) async throws -> NeoFeedDTO {
+        return try await simulateApiCall("fetchAsteroidFeed") {
+            return NeoFeedDTO(elementCount: self.fakeAsteroids.count, nearEarthObjects: ["\(startDate)": self.fakeAsteroids])
+        }
+    }
+
+    func fetchAsteroidLookup(id: String) async throws -> AsteroidDTO {
+        return try await simulateApiCall("fetchAsteroidLookup") {
+            return self.fakeAsteroids.first { $0.id == id } ?? self.fakeAsteroids[0]
+        }
+    }
+
+    func fetchAsteroidBrowse(page: Int, size: Int) async throws -> NeoBrowseDTO {
+        return try await simulateApiCall("fetchAsteroidBrowse") {
+            return NeoBrowseDTO(nearEarthObjects: self.fakeAsteroids)
+        }
+    }
+
+    // A few representative NEOs for offline / fake-API development.
+    private let fakeAsteroids: [AsteroidDTO] = [
+        AsteroidDTO(
+            id: "99942", neoReferenceId: "99942", name: "99942 Apophis", designation: "Apophis",
+            absoluteMagnitudeH: 19.7,
+            estimatedDiameter: EstimatedDiameterDTO(meters: DiameterRangeDTO(min: 240, max: 540)),
+            isPotentiallyHazardousAsteroid: true, isSentryObject: true,
+            closeApproachData: [
+                CloseApproachDTO(
+                    closeApproachDate: "2029-04-13", epochDateCloseApproach: 1879027200000,
+                    relativeVelocity: RelativeVelocityDTO(kilometersPerSecond: "7.42", kilometersPerHour: "26712"),
+                    missDistance: MissDistanceDTO(astronomical: "0.00028", lunar: "0.11", kilometers: "38100"),
+                    orbitingBody: "Earth"
+                )
+            ],
+            orbitalData: OrbitalDataDTO(
+                semiMajorAxis: "0.922", eccentricity: "0.191", inclination: "3.34",
+                ascendingNodeLongitude: "204.4", perihelionArgument: "126.4",
+                meanAnomaly: "15.0", epochOsculation: "2459000.5",
+                orbitalPeriod: "323.6", firstObservationDate: "2004-06-19"
+            )
+        ),
+        AsteroidDTO(
+            id: "25143", neoReferenceId: "25143", name: "25143 Itokawa", designation: "Itokawa",
+            absoluteMagnitudeH: 20.6,
+            estimatedDiameter: EstimatedDiameterDTO(meters: DiameterRangeDTO(min: 220, max: 510)),
+            isPotentiallyHazardousAsteroid: false, isSentryObject: false,
+            closeApproachData: [
+                CloseApproachDTO(
+                    closeApproachDate: "2071-06-23", epochDateCloseApproach: 3199000000000,
+                    relativeVelocity: RelativeVelocityDTO(kilometersPerSecond: "9.8", kilometersPerHour: "35280"),
+                    missDistance: MissDistanceDTO(astronomical: "0.014", lunar: "5.4", kilometers: "2090000"),
+                    orbitingBody: "Earth"
+                )
+            ],
+            orbitalData: OrbitalDataDTO(
+                semiMajorAxis: "1.32", eccentricity: "0.36", inclination: "1.62",
+                ascendingNodeLongitude: "69.0", perihelionArgument: "128.0",
+                meanAnomaly: "200.0", epochOsculation: "2459000.5",
+                orbitalPeriod: "582.0", firstObservationDate: "1998-09-26"
+            )
+        ),
+    ]
     
     private func simulateApiCall<T>(_ operation: String, success: @escaping () -> T) async throws -> T {
         try await Task.sleep(nanoseconds: UInt64(latency * 1_000_000_000))

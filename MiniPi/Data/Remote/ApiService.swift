@@ -30,10 +30,15 @@ enum ErrorTypes: Error, LocalizedError {
 
 protocol APIServiceProtocol {
     func fetchPosts() async throws -> [PostDTO]
+    func fetchAsteroidFeed(startDate: String, endDate: String) async throws -> NeoFeedDTO
+    func fetchAsteroidLookup(id: String) async throws -> AsteroidDTO
+    func fetchAsteroidBrowse(page: Int, size: Int) async throws -> NeoBrowseDTO
 }
 
 class APIService: APIServiceProtocol {
     private let baseURL = AppConfiguration.shared.apiBaseURL
+    private let nasaBaseURL = "https://api.nasa.gov/neo/rest/v1"
+    private let nasaApiKey = AppConfiguration.shared.nasaApiKey
     private let client: HTTPClient
 
     init(client: HTTPClient) {
@@ -62,6 +67,29 @@ class APIService: APIServiceProtocol {
             from: "\(baseURL)/posts",
             type: [PostDTO].self
         )
+    }
+
+    /// NASA NeoWs `feed` — asteroids approaching in a date window (max 7 days).
+    func fetchAsteroidFeed(startDate: String, endDate: String) async throws -> NeoFeedDTO {
+        let url = "\(nasaBaseURL)/feed?start_date=\(startDate)&end_date=\(endDate)&api_key=\(nasaApiKey)"
+        return try await fetchData(from: url, type: NeoFeedDTO.self)
+    }
+
+    /// NASA NeoWs lookup — full detail for one body by id, *including* `orbital_data`.
+    /// Used to get orbital elements for the Home tab's asteroids (the `feed` endpoint
+    /// omits `orbital_data`).
+    func fetchAsteroidLookup(id: String) async throws -> AsteroidDTO {
+        let url = "\(nasaBaseURL)/neo/\(id)?api_key=\(nasaApiKey)"
+        return try await fetchData(from: url, type: AsteroidDTO.self)
+    }
+
+    /// NASA NeoWs `neo/browse` — one page of the full NEO catalog, each body already
+    /// carrying `orbital_data`. Used to populate the 3D scene with asteroids spread
+    /// all around the Sun (the close-approach `feed` clusters them near Earth).
+    /// `page` is 0-indexed; `size` is per-page (NASA caps at 20 ≈ the catalog order).
+    func fetchAsteroidBrowse(page: Int, size: Int) async throws -> NeoBrowseDTO {
+        let url = "\(nasaBaseURL)/neo/browse?page=\(page)&size=\(size)&api_key=\(nasaApiKey)"
+        return try await fetchData(from: url, type: NeoBrowseDTO.self)
     }
 }
 

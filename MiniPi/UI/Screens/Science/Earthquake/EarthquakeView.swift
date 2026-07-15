@@ -17,8 +17,8 @@ struct EarthquakeView: View {
     
     var body: some View {
         PageScaffold(
-            pageTitle: "Earthquake",
-            content: {
+            title: "EarthquakeView",
+            mobile: {
                 basics()
             }
         )

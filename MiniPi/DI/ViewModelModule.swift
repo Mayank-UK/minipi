@@ -18,8 +18,30 @@ extension Container {
     }
     
     @MainActor
+    var pageNotFoundViewModel: Factory<PageNotFoundViewModel> {
+        Factory(self) { PageNotFoundViewModel() }
+            .scope(.singleton)
+    }
+    
+    
+    @MainActor
     var asteroidViewModel: Factory<AsteroidViewModel> {
-        Factory(self) { AsteroidViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            AsteroidViewModel(
+                logger: self.viewModelLogger(),
+                fetchAsteroids: self.fetchAsteroidsUseCase(),
+                fetchOrbitalAsteroids: self.fetchOrbitalAsteroidsUseCase(),
+                getPositions: self.getAsteroidPositionsUseCase(),
+                lookupAsteroid: self.lookupAsteroidUseCase(),
+                favorites: self.favoritesStore()
+            )
+        }
+            .scope(.singleton)
+    }
+
+    /// Persistent favorites for the asteroid "Saved" tab (UserDefaults-backed).
+    var favoritesStore: Factory<FavoritesStore> {
+        Factory(self) { FavoritesStore() }
             .scope(.singleton)
     }
     
@@ -34,10 +56,47 @@ extension Container {
         Factory(self) { WeatherViewModel(logger: self.viewModelLogger()) }
             .scope(.singleton)
     }
-
+    
+    
     @MainActor
-    var pageNotFoundViewModel: Factory<PageNotFoundViewModel> {
-        Factory(self) { PageNotFoundViewModel() }
+    var stocksViewModel: Factory<StocksViewModel> {
+        Factory(self) { StocksViewModel(logger: self.viewModelLogger()) }
             .scope(.singleton)
     }
+    
+    @MainActor
+    var cryptoViewModel: Factory<CryptoViewModel> {
+        Factory(self) { CryptoViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+    
+    @MainActor
+    var forexViewModel: Factory<ForexViewModel> {
+        Factory(self) { ForexViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+    
+    
+    @MainActor
+    var aiModelsViewModel: Factory<AIModelsViewModel> {
+        Factory(self) { AIModelsViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+    
+    
+    @MainActor
+    var indicatorsViewModel: Factory<IndicatorsViewModel> {
+        Factory(self) { IndicatorsViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+    
+    @MainActor
+    var libraryViewModel: Factory<LibraryViewModel> {
+        Factory(self) { LibraryViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+    
+
+
 }
+

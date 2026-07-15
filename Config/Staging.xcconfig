@@ -6,4 +6,4 @@ USE_FAKE_DATABASE=NO
 
 
 // NASA NeoWs API key (free, from https://api.nasa.gov)
-NASA_API_KEY=WpBEEDBBLnblaEiaxi5DVs0pM8Dh2bGXITktsQpn
+NASA_API_KEY=WpBEEDBBLnBlaEiaxi5DVs0pM8Dh2bGXITktsQpn

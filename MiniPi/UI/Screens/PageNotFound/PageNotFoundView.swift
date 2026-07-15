@@ -13,8 +13,8 @@ struct PageNotFoundView: View {
     
     var body: some View {
         PageScaffold(
-            pageTitle: "Page not found",
-            content: {
+            title: "Page not found",
+            mobile: {
                 Text("Page not found")
                     .frame(maxWidth: .infinity)
                     .frame(height: 500)

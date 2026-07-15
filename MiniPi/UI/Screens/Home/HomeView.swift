@@ -29,25 +29,53 @@ struct HomeView: View {
             ],
             spacing: DesignSystem.Sizes.md
         ) {
-            ForEach(links, id: \.self) {
-                link in Button {
+            ForEach(links, id: \.self) { link in
+                Button {
                     router.navigateTo(routePath: link.routePath)
                 } label: {
-                    Image(link.image)
-                        .resizable()
-                        .scaledToFit()
+                    // Rectangle establishes the square frame; the image overlays into it.
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.15))
+                        .aspectRatio(1, contentMode: .fit)
+                        .overlay {
+                            ZStack(alignment: .bottomLeading) {
+                                Image(link.image)
+                                    .resizable()
+                                    .scaledToFill()
+
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.65)],
+                                    startPoint: .center,
+                                    endPoint: .bottom
+                                )
+
+                                Text(link.title)
+                                    .font(designSystem.types.titleSmall)
+                                    .foregroundStyle(.white)
+                                    .padding(DesignSystem.Sizes.sm + DesignSystem.Sizes.xs)
+                            }
+                        }
+                        .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Sizes.sm + DesignSystem.Sizes.xs))
-                }.buttonStyle(.plain)
+                        .modifier(designSystem.shadow(for: .neoCard))
+                }
+                .buttonStyle(.plain)
             }
         }.padding(DesignSystem.Sizes.md)
     }
-    
+
     var body: some View {
         PageScaffold(
-            pageTitle: "MiniPi",
-            content: {
+            title: "MiniPi",
+            mobile: {
                 sectionTitle(title: "Science")
-                links(links: viewModel.links)
+                links(links: viewModel.scienceLinks)
+                sectionTitle(title: "Finance")
+                links(links: viewModel.financeLinks)
+                sectionTitle(title: "AI")
+                links(links: viewModel.aiLinks)
+                sectionTitle(title: "Education")
+                links(links: viewModel.educationLinks)
             }
         )
     }

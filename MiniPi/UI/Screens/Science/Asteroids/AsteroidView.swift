@@ -1,30 +1,67 @@
 //
-//  TempView.swift
+//  AsteroidView.swift
 //  MiniPi
 //
-//  Created by Mayank Upadhyay on 15/07/26.
+//  Entry point for Module A — NASA Asteroids. Hosts the screen-set tab shell
+//  (Home · 3D · Search · Saved · More). The Home tab is implemented; the others
+//  show a themed "coming soon" placeholder until we build them one by one.
 //
 
 import SwiftUI
+import FactoryKit
 
 struct AsteroidView: View {
-    // inject the viewModel from route
     @StateObject var viewModel: AsteroidViewModel
-    
-    func basics() -> some View {
-        Text("AsteriodView")
-    }
-    
+    @EnvironmentObject var designSystem: DesignSystem
+    @EnvironmentObject var router: Router
+
+    private var cs: ColorScheme { designSystem.colorScheme }
+
     var body: some View {
-        PageScaffold(
-            pageTitle: "AsteroidView",
-            content: {
-                basics()
+        VStack(spacing: 0) {
+            topBar
+
+            Group {
+                switch viewModel.selectedTab {
+                case .home:
+                    AsteroidHomeTab(viewModel: viewModel)
+                case .explore:
+                    AsteroidExploreTab(viewModel: viewModel)
+                case .search:
+                    AsteroidSearchTab(viewModel: viewModel)
+                case .favorites:
+                    AsteroidFavoritesTab(viewModel: viewModel)
+                }
             }
-        )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            AsteroidTabBar(selected: $viewModel.selectedTab)
+        }
+        .background(cs.space.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button {
+                router.navigateBack()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: DesignSystem.Sizes.iconMd, weight: .semibold))
+                    .foregroundStyle(cs.onSpace.opacity(0.8))
+                    .padding(DesignSystem.Sizes.sm)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+        }
+        .padding(.horizontal, DesignSystem.Sizes.sm)
+        .padding(.top, DesignSystem.Sizes.sm)
     }
 }
 
-//#Preview {
-//    TempView()
-//}
+#Preview {
+    AsteroidView(viewModel: Container.shared.asteroidViewModel())
+        .environmentObject(DesignSystem(colorScheme: ColorScheme(dark: DarkColors.self, light: LightColors.self)))
+        .environmentObject(Router())
+}

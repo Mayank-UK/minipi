@@ -17,8 +17,8 @@ struct TempView: View {
     
     var body: some View {
         PageScaffold(
-            pageTitle: "TestView",
-            content: {
+            title: "TestView",
+            mobile: {
                 basics()
             }
         )

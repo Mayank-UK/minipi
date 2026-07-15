@@ -17,8 +17,8 @@ struct WeatherView: View {
     
     var body: some View {
         PageScaffold(
-            pageTitle: "WeatherView",
-            content: {
+            title: "WeatherView",
+            mobile: {
                 basics()
             }
         )

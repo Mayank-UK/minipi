@@ -15,6 +15,7 @@ final class FakeAppDatabase: DatabaseServiceProtocol {
 
     private var scenario: DbScenario
     private var cachedPosts: [Post] = []
+    private var cachedAsteroids: [Asteroid] = []
     private let logger: AppLoggerProtocol
 
     // Scenario is supplied by the DI module from AppConfiguration (single source of truth) — no
@@ -125,6 +126,34 @@ final class FakeAppDatabase: DatabaseServiceProtocol {
                 cause: nil,
                 context: "FakeAppDatabase.clearPosts"
             )
+        }
+    }
+
+    // MARK: - Asteroid cache (Module A)
+    // Mirrors the posts surface. Reuses the same scenario so the fake DB behaves
+    // consistently with the rest of the app's failure simulation.
+
+    func fetchAsteroids() throws -> [Asteroid] {
+        logger.debug("FakeAppDatabase: fetchAsteroids called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedAsteroids
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchAsteroids")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchAsteroids")
+        }
+    }
+
+    func replaceAsteroids(_ asteroids: [AsteroidDTO]) throws {
+        logger.debug("FakeAppDatabase: replaceAsteroids called with \(asteroids.count) asteroids")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedAsteroids = asteroids.map { $0.toAsteroid() }
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceAsteroids")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceAsteroids")
         }
     }
 }

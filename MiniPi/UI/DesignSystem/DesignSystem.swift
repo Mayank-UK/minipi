@@ -20,6 +20,17 @@ struct DarkColors {
     static let onBackground = Color.white
     static let onSurface = Color.white
     static let onError = Color.white
+
+    // Asteroid / Science section semantic tokens (Module A §A.11)
+    static let space = Color(red: 0.02, green: 0.024, blue: 0.043)        // deep space background
+    static let spaceSurface = Color(red: 0.071, green: 0.075, blue: 0.102) // panels / cards
+    static let orbitPrimary = Color(red: 0.231, green: 0.510, blue: 0.965) // blue #3B82F6
+    static let orbitAccent = Color(red: 0.545, green: 0.361, blue: 0.965)  // purple #8B5CF6
+    static let hazard = Color(red: 0.961, green: 0.620, blue: 0.043)       // amber #F59E0B
+    static let distanceSafe = Color(red: 0.133, green: 0.773, blue: 0.369) // green
+    static let distanceWarn = Color(red: 0.961, green: 0.620, blue: 0.043) // amber
+    static let distanceDanger = Color(red: 0.937, green: 0.267, blue: 0.267)// red
+    static let onSpace = Color.white                                       // text/icons on space
 }
 
 // Light scheme colors
@@ -35,6 +46,17 @@ struct LightColors {
     static let onBackground = Color.black
     static let onSurface = Color.black
     static let onError = Color.black
+
+    // Asteroid / Science section semantic tokens (Module A §A.11)
+    static let space = Color(red: 0.949, green: 0.953, blue: 0.969)        // light space background
+    static let spaceSurface = Color.white                                  // panels / cards
+    static let orbitPrimary = Color(red: 0.231, green: 0.510, blue: 0.965) // blue #3B82F6
+    static let orbitAccent = Color(red: 0.545, green: 0.361, blue: 0.965)  // purple #8B5CF6
+    static let hazard = Color(red: 0.961, green: 0.620, blue: 0.043)       // amber #F59E0B
+    static let distanceSafe = Color(red: 0.133, green: 0.773, blue: 0.369)
+    static let distanceWarn = Color(red: 0.961, green: 0.620, blue: 0.043)
+    static let distanceDanger = Color(red: 0.937, green: 0.267, blue: 0.267)
+    static let onSpace = Color.black                                       // text/icons on space
 }
 
 //
@@ -103,16 +125,27 @@ class DesignSystem: ObservableObject {
         static let lg: CGFloat = 32
         static let xl: CGFloat = 64
         static let xxl: CGFloat = 128
+
+        // Asteroid / Science section radii (Module A §A.11)
+        static let cardRadius: CGFloat = 14
+        static let pillRadius: CGFloat = 10
+
+        // SF Symbol icon sizes — used instead of ad-hoc literals so icon scale is consistent.
+        static let iconSm: CGFloat = 14
+        static let iconMd: CGFloat = 18
+        static let iconLg: CGFloat = 26
+        static let iconXl: CGFloat = 44
     }
-    
+
     enum shadows {
         case buttonCard
         case buttonCardHover
         case navigationMenu
         case modal
         case bottomSheet
+        case neoCard
     }
-    
+
     func shadow(for type: shadows) -> DSShadowComponent {
         switch type {
         case .buttonCard:
@@ -125,6 +158,8 @@ class DesignSystem: ObservableObject {
             return DSShadowComponent(color: .gray, radius: 8, x: 7, y: 14)
         case .bottomSheet:
             return DSShadowComponent(color: .gray, radius: 8, x: -2, y: 4)
+        case .neoCard:
+            return DSShadowComponent(color: .black.opacity(0.45), radius: 10, x: 0, y: 6)
         }
     }
 }
@@ -142,6 +177,17 @@ struct ColorScheme {
     let onSurface: Color
     let onError: Color
 
+    // Asteroid / Science section semantic tokens
+    let space: Color
+    let spaceSurface: Color
+    let orbitPrimary: Color
+    let orbitAccent: Color
+    let hazard: Color
+    let distanceSafe: Color
+    let distanceWarn: Color
+    let distanceDanger: Color
+    let onSpace: Color
+
     init(dark: DarkColors.Type, light: LightColors.Type) {
         let currentStyle = UITraitCollection.current.userInterfaceStyle
         if currentStyle == .dark {
@@ -156,6 +202,15 @@ struct ColorScheme {
             self.onBackground = dark.onBackground
             self.onSurface = dark.onSurface
             self.onError = dark.onError
+            self.space = dark.space
+            self.spaceSurface = dark.spaceSurface
+            self.orbitPrimary = dark.orbitPrimary
+            self.orbitAccent = dark.orbitAccent
+            self.hazard = dark.hazard
+            self.distanceSafe = dark.distanceSafe
+            self.distanceWarn = dark.distanceWarn
+            self.distanceDanger = dark.distanceDanger
+            self.onSpace = dark.onSpace
         } else {
             self.primary = light.primary
             self.primaryVariant = light.primaryVariant
@@ -168,6 +223,15 @@ struct ColorScheme {
             self.onBackground = light.onBackground
             self.onSurface = light.onSurface
             self.onError = light.onError
+            self.space = light.space
+            self.spaceSurface = light.spaceSurface
+            self.orbitPrimary = light.orbitPrimary
+            self.orbitAccent = light.orbitAccent
+            self.hazard = light.hazard
+            self.distanceSafe = light.distanceSafe
+            self.distanceWarn = light.distanceWarn
+            self.distanceDanger = light.distanceDanger
+            self.onSpace = light.onSpace
         }
     }
 }

@@ -16,9 +16,19 @@ class Router: ObservableObject {
     /// new screens are added.
     enum routePaths: Hashable {
         case home
+        
         case asteroidScreen
         case earthquakeScreen
         case weatherScreen
+        
+        case stocks
+        case crypto
+        case forex
+        
+        case aiModels
+        
+        case indicators
+        case library
     }
 
     @Published var navigationStack: NavigationPath = NavigationPath()
@@ -37,6 +47,27 @@ class Router: ObservableObject {
             
         case .weatherScreen:
             WeatherView(viewModel: Container.shared.weatherViewModel())
+            
+            
+        case .stocks:
+            StocksView(viewModel: Container.shared.stocksViewModel())
+        
+        case .crypto:
+            CryptoView(viewModel: Container.shared.cryptoViewModel())
+
+        case .forex:
+            ForexView(viewModel: Container.shared.forexViewModel())
+
+
+        case .aiModels:
+            AIModelsView(viewModel: Container.shared.aiModelsViewModel())
+
+
+        case .indicators:
+            IndicatorsView(viewModel: Container.shared.indicatorsViewModel())
+
+        case .library:
+            LibraryView(viewModel: Container.shared.libraryViewModel())
         }
     }
 
