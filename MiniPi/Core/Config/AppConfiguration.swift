@@ -18,6 +18,8 @@ final class AppConfiguration {
     let environment: AppEnvironment
     let apiBaseURL: String
     let nasaApiKey: String
+    let weatherApiKey: String
+    let owmApiKey: String
     let useFakeAPI: Bool
     let useFakeDatabase: Bool
 
@@ -46,6 +48,16 @@ final class AppConfiguration {
         // Falls back to NASA's shared DEMO_KEY (rate-limited ~30 req/hr/IP) if missing.
         nasaApiKey =
             info["NASA_API_KEY"] as? String ?? "DEMO_KEY"
+
+        // WeatherAPI.com key from the per-environment xcconfig → Info.plist.
+        // No shared demo key exists — empty until one is provided; the feature surfaces
+        // the API-key error until a real key is pasted into Config/*.xcconfig.
+        weatherApiKey =
+            (info["WEATHER_API_KEY"] as? String)?.trimmingCharacters(in: .whitespaces) ?? ""
+
+        // OpenWeatherMap APPID (Weather Map tile overlays). Empty until provided.
+        owmApiKey =
+            (info["OWM_API_KEY"] as? String)?.trimmingCharacters(in: .whitespaces) ?? ""
 
         useFakeAPI =
             (info["USE_FAKE_API"] as? String)?

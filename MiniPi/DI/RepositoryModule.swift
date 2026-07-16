@@ -14,8 +14,8 @@ extension Container {
         /// Scoped and singleton — only one single instance for all injections
         Factory(self) {
             PostRepositoryImplementation(
-                apiService: self.apiService(),
-                database: self.database(),
+                remote: self.postRemoteDataSource(),
+                local: self.postLocalDataSource(),
                 logger: self.repositoryLogger()
             )
         }
@@ -26,8 +26,30 @@ extension Container {
         /// Scoped and singleton — only one single instance for all injections
         Factory(self) {
             AsteroidRepositoryImplementation(
-                apiService: self.apiService(),
-                database: self.database(),
+                remote: self.asteroidRemoteDataSource(),
+                local: self.asteroidLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
+
+    var earthquakeRepository: Factory<EarthquakeRepository> {
+        Factory(self) {
+            EarthquakeRepositoryImplementation(
+                remote: self.earthquakeRemoteDataSource(),
+                local: self.earthquakeLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
+
+    var weatherRepository: Factory<WeatherRepository> {
+        Factory(self) {
+            WeatherRepositoryImplementation(
+                remote: self.weatherRemoteDataSource(),
+                local: self.weatherLocalDataSource(),
                 logger: self.repositoryLogger()
             )
         }

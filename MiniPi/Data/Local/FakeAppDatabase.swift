@@ -11,11 +11,13 @@ import FactoryKit
 // Just make it for a single feature to test the DB functionality at least once, do not maintain it for all the features
 // `DbScenario` now lives in `Core/Scenario/DbScenario.swift`.
 
-final class FakeAppDatabase: DatabaseServiceProtocol {
+final class FakeAppDatabase: LocalDataStore {
 
     private var scenario: DbScenario
     private var cachedPosts: [Post] = []
     private var cachedAsteroids: [Asteroid] = []
+    private var cachedEarthquakes: [Earthquake] = []
+    private var cachedForecast: WeatherForecast?
     private let logger: AppLoggerProtocol
 
     // Scenario is supplied by the DI module from AppConfiguration (single source of truth) — no
@@ -154,6 +156,63 @@ final class FakeAppDatabase: DatabaseServiceProtocol {
             throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceAsteroids")
         case .connectionFailed:
             throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceAsteroids")
+        }
+    }
+
+    // MARK: - Earthquake cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in
+    // dev (USE_FAKE_DATABASE=NO); mirrors the asteroid surface so behaviour is
+    // consistent if the fake DB is ever toggled on for this feature.
+
+    func fetchEarthquakes() throws -> [Earthquake] {
+        logger.debug("FakeAppDatabase: fetchEarthquakes called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedEarthquakes
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchEarthquakes")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchEarthquakes")
+        }
+    }
+
+    func replaceEarthquakes(_ earthquakes: [GeoJSONFeatureDTO]) throws {
+        logger.debug("FakeAppDatabase: replaceEarthquakes called with \(earthquakes.count) earthquakes")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedEarthquakes = earthquakes.map { $0.toEarthquake() }
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceEarthquakes")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceEarthquakes")
+        }
+    }
+
+    // MARK: - Weather cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake forecast data (house rule).
+
+    func fetchForecast() throws -> WeatherForecast? {
+        logger.debug("FakeAppDatabase: fetchForecast called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedForecast
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchForecast")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchForecast")
+        }
+    }
+
+    func replaceForecast(_ forecast: WeatherForecast) throws {
+        logger.debug("FakeAppDatabase: replaceForecast called for \(forecast.location.name)")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedForecast = forecast
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceForecast")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceForecast")
         }
     }
 }

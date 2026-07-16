@@ -12,5 +12,11 @@
 	<string>$(USE_FAKE_DATABASE)</string>
 	<key>NASA_API_KEY</key>
 	<string>$(NASA_API_KEY)</string>
+	<key>WEATHER_API_KEY</key>
+	<string>$(WEATHER_API_KEY)</string>
+	<key>OWM_API_KEY</key>
+	<string>$(OWM_API_KEY)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MiniPi uses your location to show local weather by default.</string>
 </dict>
 </plist>

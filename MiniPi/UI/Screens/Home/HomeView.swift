@@ -11,6 +11,8 @@ struct HomeView: View {
     @StateObject var viewModel: HomeViewModel
     @EnvironmentObject var router: Router
     @EnvironmentObject var designSystem: DesignSystem
+
+    @State private var isDrawerOpen = false
     
     @ViewBuilder
     private func sectionTitle(title: String) -> some View {
@@ -44,15 +46,10 @@ struct HomeView: View {
                                     .scaledToFill()
 
                                 LinearGradient(
-                                    colors: [.clear, .black.opacity(0.65)],
+                                    colors: [.clear, .black.opacity(0.10)],
                                     startPoint: .center,
                                     endPoint: .bottom
                                 )
-
-                                Text(link.title)
-                                    .font(designSystem.types.titleSmall)
-                                    .foregroundStyle(.white)
-                                    .padding(DesignSystem.Sizes.sm + DesignSystem.Sizes.xs)
                             }
                         }
                         .clipped()
@@ -76,8 +73,28 @@ struct HomeView: View {
                 links(links: viewModel.aiLinks)
                 sectionTitle(title: "Education")
                 links(links: viewModel.educationLinks)
+            },
+            trailing: {
+                AnyView(
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            isDrawerOpen = true
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: DesignSystem.Sizes.iconMd, weight: .semibold))
+                            .foregroundStyle(designSystem.colorScheme.onBackground)
+                            .frame(width: DesignSystem.Sizes.iconLg, height: DesignSystem.Sizes.iconLg)
+                    }
+                    .buttonStyle(.plain)
+                )
             }
         )
+        .overlay {
+            AppDrawer(isOpen: $isDrawerOpen) { route in
+                router.navigateTo(routePath: route)
+            }
+        }
     }
 }
 

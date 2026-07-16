@@ -22,7 +22,7 @@ struct AsteroidSearchTab: View {
 
             VStack(spacing: DesignSystem.Sizes.md) {
                 searchBar
-                FilterChipBar(filters: $viewModel.searchFilters)
+                filterChipBar
                 if viewModel.isLookingUp {
                     HStack(spacing: DesignSystem.Sizes.xs) {
                         ProgressView().tint(cs.orbitPrimary).scaleEffect(0.8)
@@ -54,6 +54,51 @@ struct AsteroidSearchTab: View {
     }
 
     // MARK: - Subviews
+
+    /// Filter chips: hazardous toggle, min-diameter picker, sort picker. Built on
+    /// the shared `Chip`/`ChipLabel` primitives; the composition is asteroid-specific.
+    private var filterChipBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: DesignSystem.Sizes.sm) {
+                Chip(
+                    label: "Hazardous",
+                    icon: "exclamationmark.triangle.fill",
+                    isSelected: viewModel.searchFilters.hazardousOnly
+                ) { viewModel.searchFilters.hazardousOnly.toggle() }
+
+                Menu {
+                    Picker("Minimum size", selection: $viewModel.searchFilters.minDiameterBucket) {
+                        ForEach(AsteroidMinDiameter.allCases) { bucket in
+                            Text(bucket.label).tag(bucket)
+                        }
+                    }
+                } label: {
+                    ChipLabel(
+                        label: viewModel.searchFilters.minDiameterBucket.label,
+                        icon: "circle.dashed",
+                        isSelected: viewModel.searchFilters.minDiameterBucket != .any
+                    )
+                }
+                .menuStyle(.borderlessButton)
+
+                Menu {
+                    Picker("Sort by", selection: $viewModel.searchFilters.sortBy) {
+                        ForEach(AsteroidSort.allCases) { sort in
+                            Label(sort.label, systemImage: sort.icon).tag(sort)
+                        }
+                    }
+                } label: {
+                    ChipLabel(
+                        label: viewModel.searchFilters.sortBy.label,
+                        icon: "arrow.up.arrow.down",
+                        isSelected: false
+                    )
+                }
+                .menuStyle(.borderlessButton)
+            }
+            .padding(.horizontal, DesignSystem.Sizes.md)
+        }
+    }
 
     private var searchBar: some View {
         HStack(spacing: DesignSystem.Sizes.sm) {

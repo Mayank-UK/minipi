@@ -29,6 +29,9 @@ class Router: ObservableObject {
         
         case indicators
         case library
+
+        case explain
+        case about
     }
 
     @Published var navigationStack: NavigationPath = NavigationPath()
@@ -68,6 +71,12 @@ class Router: ObservableObject {
 
         case .library:
             LibraryView(viewModel: Container.shared.libraryViewModel())
+
+        case .explain:
+            ExplainView(viewModel: Container.shared.explainViewModel())
+
+        case .about:
+            AboutView(viewModel: Container.shared.aboutViewModel())
         }
     }
 

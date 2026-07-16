@@ -8,9 +8,11 @@
 
 import Foundation
 
-// Use fakeApiService when backend is not ready yet
+// Use fakeApiService when backend is not ready yet.
+// Conforms to BOTH feature remote-data-source protocols so a single fake can stand
+// in for the real per-feature data sources during offline / fake-API development.
 
-class FakeApiService: APIServiceProtocol {
+class FakeApiService: PostRemoteDataSource, AsteroidRemoteDataSource {
     
     private var scenario: ApiScenario
     private var latency: TimeInterval = 0.6
@@ -38,20 +40,20 @@ class FakeApiService: APIServiceProtocol {
         }
     }
 
-    func fetchAsteroidFeed(startDate: String, endDate: String) async throws -> NeoFeedDTO {
-        return try await simulateApiCall("fetchAsteroidFeed") {
+    func fetchFeed(startDate: String, endDate: String) async throws -> NeoFeedDTO {
+        return try await simulateApiCall("fetchFeed") {
             return NeoFeedDTO(elementCount: self.fakeAsteroids.count, nearEarthObjects: ["\(startDate)": self.fakeAsteroids])
         }
     }
 
-    func fetchAsteroidLookup(id: String) async throws -> AsteroidDTO {
-        return try await simulateApiCall("fetchAsteroidLookup") {
+    func lookup(id: String) async throws -> AsteroidDTO {
+        return try await simulateApiCall("lookup") {
             return self.fakeAsteroids.first { $0.id == id } ?? self.fakeAsteroids[0]
         }
     }
 
-    func fetchAsteroidBrowse(page: Int, size: Int) async throws -> NeoBrowseDTO {
-        return try await simulateApiCall("fetchAsteroidBrowse") {
+    func browse(page: Int, size: Int) async throws -> NeoBrowseDTO {
+        return try await simulateApiCall("browse") {
             return NeoBrowseDTO(nearEarthObjects: self.fakeAsteroids)
         }
     }

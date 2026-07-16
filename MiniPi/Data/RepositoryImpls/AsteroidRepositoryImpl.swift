@@ -12,17 +12,17 @@ import FactoryKit
 
 class AsteroidRepositoryImplementation: AsteroidRepository {
 
-    private let apiService: APIServiceProtocol
-    private let database: DatabaseServiceProtocol
+    private let remote: AsteroidRemoteDataSource
+    private let local: AsteroidLocalDataSource
     private let logger: AppLoggerProtocol
 
     init(
-        apiService: APIServiceProtocol,
-        database: DatabaseServiceProtocol,
+        remote: AsteroidRemoteDataSource,
+        local: AsteroidLocalDataSource,
         logger: AppLoggerProtocol = Container.shared.repositoryLogger()
     ) {
-        self.apiService = apiService
-        self.database = database
+        self.remote = remote
+        self.local = local
         self.logger = logger
 
         logger.info("AsteroidRepository initialized")
@@ -44,7 +44,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
                 }
 
                 logger.debug("Fetching asteroid feed from NASA NeoWs")
-                let feed = try await self.apiService.fetchAsteroidFeed(
+                let feed = try await self.remote.fetchFeed(
                     startDate: startDate,
                     endDate: endDate
                 )
@@ -53,7 +53,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
                 // Flatten the date → [asteroid] dictionary, keeping a stable, date-sorted order.
                 let dtos = Self.flatten(feed: feed)
                 logger.debug("Updating local database with \(dtos.count) asteroids")
-                try self.database.replaceAsteroids(dtos)
+                try self.local.replaceAsteroids(dtos)
                 logger.notice("Database updated successfully with \(dtos.count) asteroids")
 
                 let asteroids = dtos.map { $0.toAsteroid() }
@@ -73,7 +73,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
 
                 do {
                     self.logger.debug("Attempting to fetch cached asteroids from database")
-                    let cached = try self.database.fetchAsteroids()
+                    let cached = try self.local.fetchAsteroids()
 
                     if !cached.isEmpty {
                         self.logger.notice("Successfully retrieved \(cached.count) asteroids from cache")
@@ -113,7 +113,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
 
                 do {
                     self.logger.debug("Attempting to fetch cached asteroids from database")
-                    let cached = try self.database.fetchAsteroids()
+                    let cached = try self.local.fetchAsteroids()
 
                     if !cached.isEmpty {
                         self.logger.notice("Successfully retrieved \(cached.count) asteroids from cache")
@@ -165,12 +165,12 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
                 let pageCount = 5   // 5 × 20 = up to 100 catalog asteroids
                 logger.debug("Fetching \(pageCount) browse pages (size \(pageSize)) from NASA NeoWs")
 
-                let api = self.apiService
+                let api = self.remote
                 let log = self.logger
                 let pages: [NeoBrowseDTO] = await withTaskGroup(of: NeoBrowseDTO?.self) { group in
                     for page in 0..<pageCount {
                         group.addTask {
-                            do { return try await api.fetchAsteroidBrowse(page: page, size: pageSize) }
+                            do { return try await api.browse(page: page, size: pageSize) }
                             catch {
                                 log.error("Browse page \(page) failed: \(error.localizedDescription)", privacy: .privateData)
                                 return nil
@@ -194,7 +194,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
                 guard !dtos.isEmpty else {
                     throw ServerException("No orbital asteroids returned by browse")
                 }
-                try self.database.replaceAsteroids(dtos)
+                try self.local.replaceAsteroids(dtos)
 
                 return dtos.map { $0.toAsteroid() }
             },
@@ -224,7 +224,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
                 guard let self else {
                     throw ServerException("Repository deallocated during operation")
                 }
-                let dto = try await self.apiService.fetchAsteroidLookup(id: id)
+                let dto = try await self.remote.lookup(id: id)
                 logger.notice("Looked up asteroid \(dto.id) (\(dto.name))")
                 return dto.toAsteroid()
             }
@@ -236,7 +236,7 @@ class AsteroidRepositoryImplementation: AsteroidRepository {
     private func cachedFallback(on exception: AppException) -> Result<[Asteroid]>? {
         logger.error("Falling back to cache after: \(exception.localizedDescription)", privacy: .privateData)
         do {
-            let cached = try database.fetchAsteroids()
+            let cached = try local.fetchAsteroids()
             if !cached.isEmpty {
                 logger.notice("Retrieved \(cached.count) asteroids from cache")
                 return .success(cached)

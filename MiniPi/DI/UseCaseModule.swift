@@ -36,4 +36,24 @@ extension Container {
     var lookupAsteroidUseCase: Factory<LookupAsteroidUseCase> {
         Factory(self) { LookupAsteroidUseCase(repository: self.asteroidRepository()) }
     }
+
+    var fetchEarthquakesUseCase: Factory<FetchEarthquakesUseCase> {
+        Factory(self) { FetchEarthquakesUseCase(repository: self.earthquakeRepository()) }
+    }
+
+    var queryEarthquakesUseCase: Factory<QueryEarthquakesUseCase> {
+        Factory(self) { QueryEarthquakesUseCase(repository: self.earthquakeRepository()) }
+    }
+
+    var lookupEarthquakeUseCase: Factory<LookupEarthquakeUseCase> {
+        Factory(self) { LookupEarthquakeUseCase(repository: self.earthquakeRepository()) }
+    }
+
+    var fetchForecastUseCase: Factory<FetchForecastUseCase> {
+        Factory(self) { FetchForecastUseCase(repository: self.weatherRepository()) }
+    }
+
+    var searchCitiesUseCase: Factory<SearchCitiesUseCase> {
+        Factory(self) { SearchCitiesUseCase(repository: self.weatherRepository()) }
+    }
 }

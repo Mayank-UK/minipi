@@ -35,10 +35,42 @@ struct AsteroidView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            AsteroidTabBar(selected: $viewModel.selectedTab)
+            tabBar
         }
         .background(cs.space.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    /// Custom bottom tab bar for the asteroid screen set, themed with the space
+    /// tokens. Niche to this screen, so it lives here rather than as a component.
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            ForEach(AsteroidTab.allCases, id: \.self) { tab in
+                Button {
+                    viewModel.selectedTab = tab
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: DesignSystem.Sizes.iconMd, weight: .semibold))
+                        Text(tab.title)
+                            .font(designSystem.types.labelSmall)
+                    }
+                    .foregroundStyle(viewModel.selectedTab == tab ? cs.orbitPrimary : cs.onSpace.opacity(0.45))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, DesignSystem.Sizes.sm)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, DesignSystem.Sizes.sm)
+        .padding(.bottom, DesignSystem.Sizes.sm)
+        .background(cs.spaceSurface.opacity(0.96))
+        .overlay(
+            Rectangle()
+                .fill(cs.onSpace.opacity(0.08))
+                .frame(height: 0.5),
+            alignment: .top
+        )
     }
 
     private var topBar: some View {

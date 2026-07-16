@@ -272,16 +272,21 @@ struct SolarSystemSceneView: UIViewRepresentable {
             guard let view = scnView, gesture.state == .ended else { return }
             let location = gesture.location(in: view)
             for hit in view.hitTest(location, options: [:]) {
+                // Walk up through unnamed helper nodes (hit spheres, labels, orbit
+                // lines) to the first named ancestor.
                 var node = hit.node
                 while node.name == nil, let parent = node.parent { node = parent }
                 guard let name = node.name else { continue }
 
                 if name.hasPrefix("planet:") {
                     onSelectPlanet(String(name.dropFirst("planet:".count)))
+                    return
                 } else if let asteroid = asteroidLookup[name] {
                     onSelect(asteroid)
+                    return
                 }
-                return
+                // A named node we don't recognise (e.g. a body that's stale in the
+                // lookup) — keep scanning the remaining hits instead of giving up.
             }
         }
 
@@ -291,13 +296,20 @@ struct SolarSystemSceneView: UIViewRepresentable {
             let node = SCNNode()
             applyAsteroidStyle(node, asteroid: asteroid, selected: selected)
 
-            // Invisible, generous hit target. The visual body is tiny (~0.02) and
-            // moving, so a transparent sphere makes taps reliable for *any* asteroid.
-            // Left unnamed so the tap handler walks up through it to the asteroid node.
-            let hit = SCNNode(geometry: SCNSphere(radius: 0.1))
-            hit.geometry?.firstMaterial?.diffuse.contents = UIColor.clear
-            hit.geometry?.firstMaterial?.transparency = 0.0
-            hit.geometry?.firstMaterial?.writesToDepthBuffer = false
+            // Invisible-but-hittable target. The visual body is tiny (~0.02) and
+            // moving, so a larger sphere makes taps reliable for *any* asteroid.
+            // Important: `transparency = 0` is treated as "not there" by hit testing,
+            // so we keep the material opaque (transparency 1) and make it visually
+            // invisible via a ~0 alpha diffuse instead. Left unnamed so the tap
+            // handler walks up through it to the asteroid node.
+            let hit = SCNNode(geometry: SCNSphere(radius: 0.12))
+            let m = SCNMaterial()
+            m.diffuse.contents = UIColor(white: 1, alpha: 0.001)
+            m.lightingModel = .constant
+            m.isDoubleSided = true
+            m.transparency = 1.0
+            m.writesToDepthBuffer = false
+            hit.geometry?.materials = [m]
             node.addChildNode(hit)
             return node
         }

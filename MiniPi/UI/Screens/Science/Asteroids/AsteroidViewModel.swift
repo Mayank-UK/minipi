@@ -140,6 +140,22 @@ class AsteroidViewModel: ObservableObject {
         if name != nil { selectedAsteroid = nil }
     }
 
+    /// Drill-downs from the Home stat tiles → the Search tab (which already has a
+    /// filterable asteroid list). `This Week` shows everything; `Hazardous` turns
+    /// the hazardous filter on. Note: the Search dataset is the union of the feed
+    /// + orbital catalog, so these lists are a superset of the feed-only counts.
+    func openAllInSearch() {
+        searchQuery = ""
+        searchFilters.hazardousOnly = false
+        selectedTab = .search
+    }
+
+    func openHazardousInSearch() {
+        searchQuery = ""
+        searchFilters.hazardousOnly = true
+        selectedTab = .search
+    }
+
     func setTimeScale(_ scale: AsteroidTimeScale) {
         // Re-anchor from the currently-displayed date so switching speed is seamless.
         anchorSim = displayedDate(at: Date())

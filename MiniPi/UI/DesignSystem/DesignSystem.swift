@@ -190,49 +190,92 @@ struct ColorScheme {
 
     init(dark: DarkColors.Type, light: LightColors.Type) {
         let currentStyle = UITraitCollection.current.userInterfaceStyle
-        if currentStyle == .dark {
-            self.primary = dark.primary
-            self.primaryVariant = dark.primaryVariant
-            self.secondary = dark.secondary
-            self.background = dark.background
-            self.surface = dark.surface
-            self.error = dark.error
-            self.onPrimary = dark.onPrimary
-            self.onSecondary = dark.onSecondary
-            self.onBackground = dark.onBackground
-            self.onSurface = dark.onSurface
-            self.onError = dark.onError
-            self.space = dark.space
-            self.spaceSurface = dark.spaceSurface
-            self.orbitPrimary = dark.orbitPrimary
-            self.orbitAccent = dark.orbitAccent
-            self.hazard = dark.hazard
-            self.distanceSafe = dark.distanceSafe
-            self.distanceWarn = dark.distanceWarn
-            self.distanceDanger = dark.distanceDanger
-            self.onSpace = dark.onSpace
-        } else {
-            self.primary = light.primary
-            self.primaryVariant = light.primaryVariant
-            self.secondary = light.secondary
-            self.background = light.background
-            self.surface = light.surface
-            self.error = light.error
-            self.onPrimary = light.onPrimary
-            self.onSecondary = light.onSecondary
-            self.onBackground = light.onBackground
-            self.onSurface = light.onSurface
-            self.onError = light.onError
-            self.space = light.space
-            self.spaceSurface = light.spaceSurface
-            self.orbitPrimary = light.orbitPrimary
-            self.orbitAccent = light.orbitAccent
-            self.hazard = light.hazard
-            self.distanceSafe = light.distanceSafe
-            self.distanceWarn = light.distanceWarn
-            self.distanceDanger = light.distanceDanger
-            self.onSpace = light.onSpace
-        }
+        self.init(isDark: currentStyle == .dark, dark: dark, light: light)
+    }
+
+    /// Build from an explicit SwiftUI color scheme. Used when the app overrides
+    /// appearance via `.preferredColorScheme`, where `UITraitCollection.current`
+    /// may lag behind the desired style.
+    init(swiftUIScheme: SwiftUI.ColorScheme, dark: DarkColors.Type, light: LightColors.Type) {
+        self.init(isDark: swiftUIScheme == .dark, dark: dark, light: light)
+    }
+
+    /// Shared initializer that resolves either the dark or light token set.
+    private init(isDark: Bool, dark: DarkColors.Type, light: LightColors.Type) {
+        let source: Palette = isDark ? Palette(dark: dark) : Palette(light: light)
+        self.primary = source.primary
+        self.primaryVariant = source.primaryVariant
+        self.secondary = source.secondary
+        self.background = source.background
+        self.surface = source.surface
+        self.error = source.error
+        self.onPrimary = source.onPrimary
+        self.onSecondary = source.onSecondary
+        self.onBackground = source.onBackground
+        self.onSurface = source.onSurface
+        self.onError = source.onError
+        self.space = source.space
+        self.spaceSurface = source.spaceSurface
+        self.orbitPrimary = source.orbitPrimary
+        self.orbitAccent = source.orbitAccent
+        self.hazard = source.hazard
+        self.distanceSafe = source.distanceSafe
+        self.distanceWarn = source.distanceWarn
+        self.distanceDanger = source.distanceDanger
+        self.onSpace = source.onSpace
+    }
+}
+
+/// Value-type snapshot of a color token set, so `ColorScheme` can be built from
+/// either `DarkColors` or `LightColors` without duplicating the assignment list.
+private struct Palette {
+    let primary: Color
+    let primaryVariant: Color
+    let secondary: Color
+    let background: Color
+    let surface: Color
+    let error: Color
+    let onPrimary: Color
+    let onSecondary: Color
+    let onBackground: Color
+    let onSurface: Color
+    let onError: Color
+    let space: Color
+    let spaceSurface: Color
+    let orbitPrimary: Color
+    let orbitAccent: Color
+    let hazard: Color
+    let distanceSafe: Color
+    let distanceWarn: Color
+    let distanceDanger: Color
+    let onSpace: Color
+
+    init(dark: DarkColors.Type) {
+        self.primary = dark.primary; self.primaryVariant = dark.primaryVariant
+        self.secondary = dark.secondary; self.background = dark.background
+        self.surface = dark.surface; self.error = dark.error
+        self.onPrimary = dark.onPrimary; self.onSecondary = dark.onSecondary
+        self.onBackground = dark.onBackground; self.onSurface = dark.onSurface
+        self.onError = dark.onError
+        self.space = dark.space; self.spaceSurface = dark.spaceSurface
+        self.orbitPrimary = dark.orbitPrimary; self.orbitAccent = dark.orbitAccent
+        self.hazard = dark.hazard
+        self.distanceSafe = dark.distanceSafe; self.distanceWarn = dark.distanceWarn
+        self.distanceDanger = dark.distanceDanger; self.onSpace = dark.onSpace
+    }
+
+    init(light: LightColors.Type) {
+        self.primary = light.primary; self.primaryVariant = light.primaryVariant
+        self.secondary = light.secondary; self.background = light.background
+        self.surface = light.surface; self.error = light.error
+        self.onPrimary = light.onPrimary; self.onSecondary = light.onSecondary
+        self.onBackground = light.onBackground; self.onSurface = light.onSurface
+        self.onError = light.onError
+        self.space = light.space; self.spaceSurface = light.spaceSurface
+        self.orbitPrimary = light.orbitPrimary; self.orbitAccent = light.orbitAccent
+        self.hazard = light.hazard
+        self.distanceSafe = light.distanceSafe; self.distanceWarn = light.distanceWarn
+        self.distanceDanger = light.distanceDanger; self.onSpace = light.onSpace
     }
 }
 

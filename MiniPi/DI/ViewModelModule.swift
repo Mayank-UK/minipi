@@ -45,15 +45,43 @@ extension Container {
             .scope(.singleton)
     }
     
+    /// Persistent watchlist for the earthquake "Watchlist" tab (UserDefaults-backed).
+    var earthquakeWatchlistStore: Factory<EarthquakeWatchlistStore> {
+        Factory(self) { EarthquakeWatchlistStore() }
+            .scope(.singleton)
+    }
+
     @MainActor
     var earthquakeViewModel: Factory<EarthquakeViewModel> {
-        Factory(self) { EarthquakeViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            EarthquakeViewModel(
+                logger: self.viewModelLogger(),
+                fetchEarthquakes: self.fetchEarthquakesUseCase(),
+                queryEarthquakes: self.queryEarthquakesUseCase(),
+                lookupEarthquake: self.lookupEarthquakeUseCase(),
+                watchlist: self.earthquakeWatchlistStore()
+            )
+        }
             .scope(.singleton)
     }
     
+    /// Persistent "last selected city" for the Weather Home tab (UserDefaults-backed).
+    var weatherCityStore: Factory<WeatherCityStore> {
+        Factory(self) { WeatherCityStore() }
+            .scope(.singleton)
+    }
+
     @MainActor
     var weatherViewModel: Factory<WeatherViewModel> {
-        Factory(self) { WeatherViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            WeatherViewModel(
+                logger: self.viewModelLogger(),
+                fetchForecast: self.fetchForecastUseCase(),
+                searchCities: self.searchCitiesUseCase(),
+                cityStore: self.weatherCityStore(),
+                locationService: self.locationService()
+            )
+        }
             .scope(.singleton)
     }
     
@@ -93,6 +121,18 @@ extension Container {
     @MainActor
     var libraryViewModel: Factory<LibraryViewModel> {
         Factory(self) { LibraryViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+
+    @MainActor
+    var explainViewModel: Factory<ExplainViewModel> {
+        Factory(self) { ExplainViewModel(logger: self.viewModelLogger()) }
+            .scope(.singleton)
+    }
+
+    @MainActor
+    var aboutViewModel: Factory<AboutViewModel> {
+        Factory(self) { AboutViewModel(logger: self.viewModelLogger()) }
             .scope(.singleton)
     }
     

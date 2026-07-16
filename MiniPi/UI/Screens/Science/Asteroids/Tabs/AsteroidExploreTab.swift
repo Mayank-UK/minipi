@@ -79,7 +79,7 @@ struct AsteroidExploreTab: View {
 
     private var topBar: some View {
         HStack {
-            LiveDataBadge()
+            LiveDataBadge(source: "NASA")
             Spacer()
             Label("\(viewModel.orbitalAsteroids.count)", systemImage: "circle.grid.2x1.fill")
                 .font(designSystem.types.labelMedium)

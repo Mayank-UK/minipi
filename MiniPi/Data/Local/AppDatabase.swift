@@ -2,33 +2,60 @@
 //  AppDatabase.swift
 //  MiniPi
 //
-//  Default (non-fake) database service. This starter project uses a simple
-//  in-memory store so the app compiles and runs with zero extra setup.
-//  Swap this out for a real persistence layer (Core Data, SwiftData, GRDB,
-//  Realm, etc.) when you need on-disk storage — the `DatabaseServiceProtocol`
-//  surface and the DI wiring in `DatabaseModule` stay the same.
+//  The single local store engine (in-memory here; swap for Core Data / SwiftData /
+//  GRDB / Realm later — the protocols below stay the same). One shared instance
+//  backs every feature's local data source: a database is one engine, not one
+//  per feature.
+//
+//  Feature access is segregated through narrow protocols (PostLocalDataSource,
+//  AsteroidLocalDataSource) so a repository only sees the slice it needs.
+//  `LocalDataStore` is the union the concrete store conforms to; the DI module
+//  resolves it once and hands out the narrow views.
 //
 
 import Foundation
 import FactoryKit
 
-protocol DatabaseServiceProtocol {
+// MARK: - Feature-narrow local data source protocols
+
+protocol PostLocalDataSource {
     func fetchPosts() throws -> [Post]
     func replacePosts(_ posts: [PostDTO]) throws
     func clearPosts() throws
+}
 
-    // Asteroid cache (Module A) — mirrors the Posts cache surface.
+protocol AsteroidLocalDataSource {
     func fetchAsteroids() throws -> [Asteroid]
     func replaceAsteroids(_ asteroids: [AsteroidDTO]) throws
 }
 
-final class AppDatabase: DatabaseServiceProtocol {
+protocol EarthquakeLocalDataSource {
+    func fetchEarthquakes() throws -> [Earthquake]
+    func replaceEarthquakes(_ earthquakes: [GeoJSONFeatureDTO]) throws
+}
+
+protocol WeatherLocalDataSource {
+    /// The last cached forecast (Home/Stats dataset). `nil` when nothing is cached.
+    func fetchForecast() throws -> WeatherForecast?
+    func replaceForecast(_ forecast: WeatherForecast) throws
+}
+
+/// Union of every feature's local-data-source protocol — what a concrete store
+/// (AppDatabase, FakeAppDatabase) conforms to. Resolved once in `DatabaseModule`;
+/// repositories receive the narrow slice they depend on.
+protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource {}
+
+// MARK: - Concrete in-memory store
+
+final class AppDatabase: LocalDataStore {
 
     static let shared = AppDatabase()
 
     private let logger: AppLoggerProtocol
     private var cachedPosts: [Post] = []
     private var cachedAsteroids: [Asteroid] = []
+    private var cachedEarthquakes: [Earthquake] = []
+    private var cachedForecast: WeatherForecast?
 
     private init(logger: AppLoggerProtocol = Container.shared.databaseLogger()) {
         self.logger = logger
@@ -60,5 +87,25 @@ final class AppDatabase: DatabaseServiceProtocol {
     func replaceAsteroids(_ asteroids: [AsteroidDTO]) throws {
         logger.debug("Replacing \(asteroids.count) asteroids (in-memory)")
         cachedAsteroids = asteroids.map { $0.toAsteroid() }
+    }
+
+    func fetchEarthquakes() throws -> [Earthquake] {
+        logger.debug("Fetching \(cachedEarthquakes.count) earthquakes (in-memory)")
+        return cachedEarthquakes
+    }
+
+    func replaceEarthquakes(_ earthquakes: [GeoJSONFeatureDTO]) throws {
+        logger.debug("Replacing \(earthquakes.count) earthquakes (in-memory)")
+        cachedEarthquakes = earthquakes.map { $0.toEarthquake() }
+    }
+
+    func fetchForecast() throws -> WeatherForecast? {
+        logger.debug("Fetching cached forecast (in-memory)")
+        return cachedForecast
+    }
+
+    func replaceForecast(_ forecast: WeatherForecast) throws {
+        logger.debug("Caching forecast for \(forecast.location.name) (in-memory)")
+        cachedForecast = forecast
     }
 }

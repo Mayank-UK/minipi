@@ -7,3 +7,9 @@ USE_FAKE_DATABASE=NO
 
 // NASA NeoWs API key (free, from https://api.nasa.gov)
 NASA_API_KEY=WpBEEDBBLnBlaEiaxi5DVs0pM8Dh2bGXITktsQpn
+
+// WeatherAPI.com key (free, from https://www.weatherapi.com).
+WEATHER_API_KEY=d4d138d65d3a4b529ae160303261607
+
+// OpenWeatherMap APPID — for the Weather Map tab tile overlays.
+OWM_API_KEY=fb874f6589aaf4ba201429006ab801c0

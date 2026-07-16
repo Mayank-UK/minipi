@@ -15,6 +15,8 @@ struct AsteroidHomeTab: View {
     @EnvironmentObject var designSystem: DesignSystem
     private var cs: ColorScheme { designSystem.colorScheme }
 
+    @State private var detailAsteroid: Asteroid?
+
     var body: some View {
         ZStack {
             cs.space.ignoresSafeArea()
@@ -44,6 +46,13 @@ struct AsteroidHomeTab: View {
                     .padding(.bottom, 56)
             }
         }
+        .sheet(item: $detailAsteroid) { asteroid in
+            AsteroidDetailSheet(
+                asteroid: asteroid,
+                isFavorite: viewModel.isFavorite(asteroid),
+                onToggleFavorite: { viewModel.toggleFavorite(asteroid) }
+            )
+        }
         .task {
             if viewModel.asteroids.isEmpty && viewModel.currentFailure == nil {
                 await viewModel.loadAsteroids()
@@ -67,14 +76,18 @@ struct AsteroidHomeTab: View {
 
     @ViewBuilder
     private func dashboardContent(statColumns: Int, approachColumns: Int) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Sizes.lg) {
-            greetingRow
-            statGrid(columns: statColumns)
-            approachesSection(columns: approachColumns)
-            storyCard
+        ScrollViewReader { proxy in
+            VStack(alignment: .leading, spacing: DesignSystem.Sizes.lg) {
+                greetingRow
+                statGrid(columns: statColumns) {
+                    withAnimation { proxy.scrollTo(ApproachSectionAnchor.today, anchor: .top) }
+                }
+                approachesSection(columns: approachColumns)
+                storyCard
+            }
+            .padding(.horizontal, DesignSystem.Sizes.md)
+            .padding(.bottom, DesignSystem.Sizes.xxl)
         }
-        .padding(.horizontal, DesignSystem.Sizes.md)
-        .padding(.bottom, DesignSystem.Sizes.xxl)
     }
 
     private var greetingRow: some View {
@@ -82,19 +95,29 @@ struct AsteroidHomeTab: View {
             Text(greeting)
                 .font(designSystem.types.bodyMedium)
                 .foregroundStyle(cs.onSpace.opacity(0.6))
-            LiveDataBadge()
+            LiveDataBadge(source: "NASA")
         }
     }
 
-    private func statGrid(columns: Int) -> some View {
+    private func statGrid(columns: Int, todayAction: @escaping () -> Void) -> some View {
         let cols = Array(repeating: GridItem(.flexible(), spacing: DesignSystem.Sizes.md), count: columns)
         return LazyVGrid(columns: cols, spacing: DesignSystem.Sizes.md) {
-            StatTile(title: "This Week", value: "\(viewModel.asteroids.count)", icon: "calendar")
-            StatTile(title: "Today", value: "\(viewModel.todaysApproaches.count)", icon: "sun.max.fill", accent: cs.orbitAccent)
-            StatTile(title: "Hazardous", value: "\(viewModel.hazardousCount)", icon: "exclamationmark.triangle.fill", accent: cs.hazard)
+            StatTile(title: "This Week", value: "\(viewModel.asteroids.count)", icon: "calendar") {
+                viewModel.openAllInSearch()
+            }
+            StatTile(title: "Today", value: "\(viewModel.todaysApproaches.count)", icon: "sun.max.fill", accent: cs.orbitAccent) {
+                todayAction()
+            }
+            StatTile(title: "Hazardous", value: "\(viewModel.hazardousCount)", icon: "exclamationmark.triangle.fill", accent: cs.hazard) {
+                viewModel.openHazardousInSearch()
+            }
             StatTile(title: "Closest (LD)",
                      value: viewModel.closestApproach.map { String(format: "%.2f", $0.lunar) } ?? "—",
-                     icon: "ruler", accent: cs.distanceSafe)
+                     icon: "ruler", accent: cs.distanceSafe) {
+                if let closest = viewModel.closestApproach {
+                    detailAsteroid = closest.asteroid
+                }
+            }
         }
     }
 
@@ -104,20 +127,86 @@ struct AsteroidHomeTab: View {
             Text("Today's Close Approaches")
                 .font(designSystem.types.titleMedium)
                 .foregroundStyle(cs.onSpace)
+                .id(ApproachSectionAnchor.today)
 
             if viewModel.todaysApproaches.isEmpty {
                 emptyApproaches
             } else if columns <= 1 {
                 VStack(spacing: DesignSystem.Sizes.sm) {
-                    ForEach(viewModel.todaysApproaches) { CloseApproachCard(asteroid: $0) }
+                    ForEach(viewModel.todaysApproaches) { closeApproachCard(asteroid: $0) }
                 }
             } else {
                 let cols = Array(repeating: GridItem(.flexible(), spacing: DesignSystem.Sizes.md), count: columns)
                 LazyVGrid(columns: cols, spacing: DesignSystem.Sizes.sm) {
-                    ForEach(viewModel.todaysApproaches) { CloseApproachCard(asteroid: $0) }
+                    ForEach(viewModel.todaysApproaches) { closeApproachCard(asteroid: $0) }
                 }
             }
         }
+    }
+
+    /// A row in the "Close Approaches" list. Niche to this tab, so it lives here.
+    /// Tappable — opens `AsteroidDetailSheet`, which is why it carries a chevron.
+    @ViewBuilder
+    private func closeApproachCard(asteroid: Asteroid) -> some View {
+        let approach = asteroid.nextCloseApproach
+
+        /// Prefer the epoch timestamp (carries time-of-day) over the date-only field.
+        let timing: Date? = {
+            if let ms = approach?.epochDateMs {
+                return Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0)
+            }
+            return approach?.date
+        }()
+
+        Button {
+            detailAsteroid = asteroid
+        } label: {
+            HStack(spacing: DesignSystem.Sizes.md) {
+                ZStack {
+                    Circle()
+                        .fill(cs.orbitAccent.opacity(0.18))
+                    Image(systemName: "circle.grid.2x2.fill")
+                        .foregroundStyle(asteroid.isPotentiallyHazardous ? cs.hazard : cs.orbitAccent)
+                }
+                .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: DesignSystem.Sizes.sm) {
+                        Text(asteroid.name)
+                            .font(designSystem.types.titleSmall)
+                            .foregroundStyle(cs.onSpace)
+                            .lineLimit(1)
+                        HazardBadge(isHazardous: asteroid.isPotentiallyHazardous)
+                    }
+
+                    HStack(spacing: DesignSystem.Sizes.sm) {
+                        if let timing {
+                            Label(timing.formatted(date: .omitted, time: .shortened),
+                                  systemImage: "clock")
+                        } else {
+                            Label("—", systemImage: "clock")
+                        }
+                        if let lunar = approach?.missDistanceLunar {
+                            Label(String(format: "%.2f LD", lunar), systemImage: "ruler")
+                        }
+                    }
+                    .font(designSystem.types.labelMedium)
+                    .foregroundStyle(cs.onSpace.opacity(0.6))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: DesignSystem.Sizes.iconSm, weight: .semibold))
+                    .foregroundStyle(cs.onSpace.opacity(0.3))
+            }
+            .padding(DesignSystem.Sizes.md)
+            .background(cs.spaceSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Sizes.cardRadius))
+            .modifier(designSystem.shadow(for: .neoCard))
+            .contentShape(RoundedRectangle(cornerRadius: DesignSystem.Sizes.cardRadius))
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyApproaches: some View {
@@ -173,4 +262,9 @@ struct AsteroidHomeTab: View {
         default: return "Good evening"
         }
     }
+}
+
+/// Scroll anchor for the "Today's Close Approaches" section (used by the Today tile).
+private enum ApproachSectionAnchor: Hashable {
+    case today
 }

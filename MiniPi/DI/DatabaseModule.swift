@@ -1,28 +1,52 @@
 //
 //  DatabaseModule.swift
-//  IosDevelopersGuide
+//  MiniPi
 //
-//  Mirrors the Android DatabaseModule.
-//  Provides either the real CoreData database or the fake database, selected by
-//  the `USE_FAKE_DATABASE` build setting so it can be toggled per environment.
+//  Resolves the single shared local store (real or fake), then hands out narrow
+//  per-feature local-data-source views of it. `USE_FAKE_DATABASE` (config files)
+//  toggles the whole layer. One store instance backs every feature — a database
+//  is one engine, not one per feature.
 //
 
 import FactoryKit
 
 extension Container {
-    // USE_FAKE_DATABASE variable inside config files to switch between FakeApiService and ApiService, keep the wiring here
-    var database: Factory<any DatabaseServiceProtocol> {
+
+    /// The single shared store (real `AppDatabase` or `FakeAppDatabase`).
+    /// Resolved once; the narrow factories below return views of this same instance.
+    var localStore: Factory<any LocalDataStore> {
         Factory(self) {
             let config = AppConfiguration.shared
             if config.useFakeDatabase {
                 return FakeAppDatabase(
                     scenario: config.dbScenario,
                     logger: self.databaseLogger()
-                ) as any DatabaseServiceProtocol
+                ) as any LocalDataStore
             } else {
-                return AppDatabase.shared as any DatabaseServiceProtocol
+                return AppDatabase.shared as any LocalDataStore
             }
         }
         .scope(.singleton)
+    }
+
+    /// Feature-narrow views over the shared store — repositories depend on these.
+    var postLocalDataSource: Factory<any PostLocalDataSource> {
+        Factory(self) { self.localStore() as any PostLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var asteroidLocalDataSource: Factory<any AsteroidLocalDataSource> {
+        Factory(self) { self.localStore() as any AsteroidLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var earthquakeLocalDataSource: Factory<any EarthquakeLocalDataSource> {
+        Factory(self) { self.localStore() as any EarthquakeLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var weatherLocalDataSource: Factory<any WeatherLocalDataSource> {
+        Factory(self) { self.localStore() as any WeatherLocalDataSource }
+            .scope(.singleton)
     }
 }

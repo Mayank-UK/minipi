@@ -10,17 +10,17 @@ import FactoryKit
 
 class PostRepositoryImplementation: PostRepository {
 
-    private let apiService: APIServiceProtocol
-    private let database: DatabaseServiceProtocol
+    private let remote: PostRemoteDataSource
+    private let local: PostLocalDataSource
     private let logger: AppLoggerProtocol
 
     init(
-        apiService: APIServiceProtocol,
-        database: DatabaseServiceProtocol,
+        remote: PostRemoteDataSource,
+        local: PostLocalDataSource,
         logger: AppLoggerProtocol = Container.shared.repositoryLogger()
     ) {
-        self.apiService = apiService
-        self.database = database
+        self.remote = remote
+        self.local = local
         self.logger = logger
 
         logger.info("PostRepository initialized")
@@ -39,11 +39,11 @@ class PostRepositoryImplementation: PostRepository {
                 }
 
                 logger.debug("Fetching posts from remote API")
-                let remotePosts = try await self.apiService.fetchPosts()
+                let remotePosts = try await self.remote.fetchPosts()
                 logger.info("Successfully fetched \(remotePosts.count) posts from API")
 
                 logger.debug("Updating local database with remote posts")
-                try self.database.replacePosts(remotePosts)
+                try self.local.replacePosts(remotePosts)
                 logger.notice("Database updated successfully with \(remotePosts.count) posts")
 
                 let posts = remotePosts.map {
@@ -71,7 +71,7 @@ class PostRepositoryImplementation: PostRepository {
                 do {
 
                     self.logger.debug("Attempting to fetch cached posts from database")
-                    let cachedPosts = try self.database.fetchPosts()
+                    let cachedPosts = try self.local.fetchPosts()
 
                     if !cachedPosts.isEmpty {
                         self.logger.notice("Successfully retrieved \(cachedPosts.count) posts from cache")
@@ -115,7 +115,7 @@ class PostRepositoryImplementation: PostRepository {
                 do {
 
                     self.logger.debug("Attempting to fetch cached posts from database")
-                    let cachedPosts = try self.database.fetchPosts()
+                    let cachedPosts = try self.local.fetchPosts()
 
                     if !cachedPosts.isEmpty {
                         self.logger.notice("Successfully retrieved \(cachedPosts.count) posts from cache")

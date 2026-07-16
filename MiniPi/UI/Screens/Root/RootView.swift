@@ -12,14 +12,25 @@ struct RootView<InitialView: View>: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    
+
+    @StateObject private var appearance = AppearanceManager()
     @StateObject private var designSystem = DesignSystem(
         colorScheme: ColorScheme(dark: DarkColors.self, light: LightColors.self)
     )
     @StateObject var screenData: ScreenData = ScreenData()
     @StateObject var router: Router = Router()
-        
+
     private let initialView: InitialView
+
+    /// The color scheme the app should actually render with, combining the
+    /// user's in-app preference with the device setting.
+    private var effectiveScheme: SwiftUI.ColorScheme {
+        switch appearance.preference {
+        case .system: return colorScheme
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
     
     init(@ViewBuilder content: @escaping () -> InitialView) {
         self.initialView = content()
@@ -44,13 +55,21 @@ struct RootView<InitialView: View>: View {
                 }
         }
         
-            .onChange(of: colorScheme) {
-                let colorScheme = ColorScheme(dark: DarkColors.self, light: LightColors.self)
-                designSystem.updateColorScheme(colorScheme)
+            .onChange(of: effectiveScheme) { newScheme in
+                designSystem.updateColorScheme(
+                    ColorScheme(swiftUIScheme: newScheme, dark: DarkColors.self, light: LightColors.self)
+                )
             }
+            .onAppear {
+                designSystem.updateColorScheme(
+                    ColorScheme(swiftUIScheme: effectiveScheme, dark: DarkColors.self, light: LightColors.self)
+                )
+            }
+            .preferredColorScheme(appearance.preference.swiftUIScheme)
             .environmentObject(designSystem)
             .environmentObject(screenData)
             .environmentObject(router)
+            .environmentObject(appearance)
     }
 }
 

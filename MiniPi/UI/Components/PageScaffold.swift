@@ -19,6 +19,7 @@ struct PageScaffold: View {
     private let desktopContent: () -> AnyView
     private let background: Color?
     private let onRefresh: (() async -> Void)?
+    private let trailingContent: (() -> AnyView)?
 
     @EnvironmentObject var designSystem: DesignSystem
 
@@ -28,7 +29,8 @@ struct PageScaffold: View {
         tablet: (() -> AnyView)? = nil,
         desktop: (() -> AnyView)? = nil,
         background: Color? = nil,
-        onRefresh: (() async -> Void)? = nil
+        onRefresh: (() async -> Void)? = nil,
+        trailing: (() -> AnyView)? = nil
     ) {
         self.title = title
         let mobileErased: () -> AnyView = { AnyView(mobile()) }
@@ -37,6 +39,7 @@ struct PageScaffold: View {
         self.desktopContent = desktop ?? mobileErased
         self.background = background
         self.onRefresh = onRefresh
+        self.trailingContent = trailing
     }
 
     var body: some View {
@@ -66,6 +69,9 @@ struct PageScaffold: View {
                 .font(designSystem.types.headlineSmall)
                 .foregroundStyle(cs.onBackground)
             Spacer()
+            if let trailingContent {
+                trailingContent()
+            }
         }
         .padding(.horizontal, DesignSystem.Sizes.md)
         .padding(.top, DesignSystem.Sizes.sm)
