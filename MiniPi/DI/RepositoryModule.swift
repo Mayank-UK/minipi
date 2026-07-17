@@ -77,4 +77,37 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    var cryptoRepository: Factory<CryptoRepository> {
+        Factory(self) {
+            CryptoRepositoryImplementation(
+                remote: self.cryptoRemoteDataSource(),
+                local: self.cryptoLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
+
+    var aiModelRepository: Factory<AIModelRepository> {
+        Factory(self) {
+            AIModelRepositoryImplementation(
+                remote: self.aiModelRemoteDataSource(),
+                local: self.aiModelLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
+
+    var indicatorRepository: Factory<IndicatorRepository> {
+        Factory(self) {
+            IndicatorRepositoryImplementation(
+                remote: self.indicatorRemoteDataSource(),
+                local: self.indicatorLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
 }

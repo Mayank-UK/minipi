@@ -102,4 +102,31 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    // Yahoo Finance cryptocurrencies (dash form e.g. BTC-USD, no key). No fake crypto
+    // data source (house rule), so this is always the real implementation.
+    var cryptoRemoteDataSource: Factory<any CryptoRemoteDataSource> {
+        Factory(self) {
+            CryptoRemoteDataSourceImpl(client: self.httpClient()) as any CryptoRemoteDataSource
+        }
+        .scope(.singleton)
+    }
+
+    // OpenRouter public model catalog (no key). No fake AI data source (house rule), so
+    // this is always the real implementation.
+    var aiModelRemoteDataSource: Factory<any AIModelRemoteDataSource> {
+        Factory(self) {
+            AIModelRemoteDataSourceImpl(client: self.httpClient()) as any AIModelRemoteDataSource
+        }
+        .scope(.singleton)
+    }
+
+    // World Bank Open Data API (no key). No fake data source (house rule), so this is
+    // always the real implementation.
+    var indicatorRemoteDataSource: Factory<any IndicatorRemoteDataSource> {
+        Factory(self) {
+            IndicatorRemoteDataSourceImpl(client: self.httpClient()) as any IndicatorRemoteDataSource
+        }
+        .scope(.singleton)
+    }
 }

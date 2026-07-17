@@ -52,10 +52,28 @@ protocol ForexLocalDataSource {
     func replaceForexOverview(_ overview: ForexMarketOverview) throws
 }
 
+protocol CryptoLocalDataSource {
+    /// The last cached crypto overview (Home/Stats dataset). `nil` when nothing is cached.
+    func fetchCryptoOverview() throws -> CryptoMarketOverview?
+    func replaceCryptoOverview(_ overview: CryptoMarketOverview) throws
+}
+
+protocol AIModelLocalDataSource {
+    /// The last cached AI model catalog (Home/Ranking/Search/Compare dataset). `nil` when nothing is cached.
+    func fetchAIModelCatalog() throws -> AIModelCatalog?
+    func replaceAIModelCatalog(_ catalog: AIModelCatalog) throws
+}
+
+protocol IndicatorLocalDataSource {
+    /// The last cached World Bank dataset (Home/Ranking/Search/Compare/Stats). `nil` when nothing is cached.
+    func fetchWorldData() throws -> WorldDataCatalog?
+    func replaceWorldData(_ catalog: WorldDataCatalog) throws
+}
+
 /// Union of every feature's local-data-source protocol — what a concrete store
 /// (AppDatabase, FakeAppDatabase) conforms to. Resolved once in `DatabaseModule`;
 /// repositories receive the narrow slice they depend on.
-protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource, StocksLocalDataSource, ForexLocalDataSource {}
+protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource, StocksLocalDataSource, ForexLocalDataSource, CryptoLocalDataSource, AIModelLocalDataSource, IndicatorLocalDataSource {}
 
 // MARK: - Concrete in-memory store
 
@@ -70,6 +88,9 @@ final class AppDatabase: LocalDataStore {
     private var cachedForecast: WeatherForecast?
     private var cachedMarketOverview: StockMarketOverview?
     private var cachedForexOverview: ForexMarketOverview?
+    private var cachedCryptoOverview: CryptoMarketOverview?
+    private var cachedAIModelCatalog: AIModelCatalog?
+    private var cachedWorldData: WorldDataCatalog?
 
     private init(logger: AppLoggerProtocol = Container.shared.databaseLogger()) {
         self.logger = logger
@@ -141,5 +162,35 @@ final class AppDatabase: LocalDataStore {
     func replaceForexOverview(_ overview: ForexMarketOverview) throws {
         logger.debug("Caching forex overview vs \(overview.baseLabel) (in-memory)")
         cachedForexOverview = overview
+    }
+
+    func fetchCryptoOverview() throws -> CryptoMarketOverview? {
+        logger.debug("Fetching cached crypto overview (in-memory)")
+        return cachedCryptoOverview
+    }
+
+    func replaceCryptoOverview(_ overview: CryptoMarketOverview) throws {
+        logger.debug("Caching crypto overview vs \(overview.quoteLabel) (in-memory)")
+        cachedCryptoOverview = overview
+    }
+
+    func fetchAIModelCatalog() throws -> AIModelCatalog? {
+        logger.debug("Fetching cached AI model catalog (in-memory)")
+        return cachedAIModelCatalog
+    }
+
+    func replaceAIModelCatalog(_ catalog: AIModelCatalog) throws {
+        logger.debug("Caching AI model catalog: \(catalog.models.count) models (in-memory)")
+        cachedAIModelCatalog = catalog
+    }
+
+    func fetchWorldData() throws -> WorldDataCatalog? {
+        logger.debug("Fetching cached World Bank catalog (in-memory)")
+        return cachedWorldData
+    }
+
+    func replaceWorldData(_ catalog: WorldDataCatalog) throws {
+        logger.debug("Caching World Bank catalog: \(catalog.countries.count) countries, \(catalog.observations.count) data points (in-memory)")
+        cachedWorldData = catalog
     }
 }

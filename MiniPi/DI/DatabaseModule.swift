@@ -59,4 +59,19 @@ extension Container {
         Factory(self) { self.localStore() as any ForexLocalDataSource }
             .scope(.singleton)
     }
+
+    var cryptoLocalDataSource: Factory<any CryptoLocalDataSource> {
+        Factory(self) { self.localStore() as any CryptoLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var aiModelLocalDataSource: Factory<any AIModelLocalDataSource> {
+        Factory(self) { self.localStore() as any AIModelLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var indicatorLocalDataSource: Factory<any IndicatorLocalDataSource> {
+        Factory(self) { self.localStore() as any IndicatorLocalDataSource }
+            .scope(.singleton)
+    }
 }

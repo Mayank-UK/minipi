@@ -100,4 +100,32 @@ extension Container {
     var searchForexUseCase: Factory<SearchForexUseCase> {
         Factory(self) { SearchForexUseCase(repository: self.forexRepository()) }
     }
+
+    var fetchCryptoOverviewUseCase: Factory<FetchCryptoOverviewUseCase> {
+        Factory(self) { FetchCryptoOverviewUseCase(repository: self.cryptoRepository()) }
+    }
+
+    var cryptoPriceUseCase: Factory<CryptoPriceUseCase> {
+        Factory(self) { CryptoPriceUseCase(repository: self.cryptoRepository()) }
+    }
+
+    var cryptoPricesUseCase: Factory<CryptoPricesUseCase> {
+        Factory(self) { CryptoPricesUseCase(repository: self.cryptoRepository()) }
+    }
+
+    var cryptoCandlesUseCase: Factory<CryptoCandlesUseCase> {
+        Factory(self) { CryptoCandlesUseCase(repository: self.cryptoRepository()) }
+    }
+
+    var searchCryptoUseCase: Factory<SearchCryptoUseCase> {
+        Factory(self) { SearchCryptoUseCase(repository: self.cryptoRepository()) }
+    }
+
+    var fetchAIModelCatalogUseCase: Factory<FetchAIModelCatalogUseCase> {
+        Factory(self) { FetchAIModelCatalogUseCase(repository: self.aiModelRepository()) }
+    }
+
+    var fetchWorldDataUseCase: Factory<FetchWorldDataUseCase> {
+        Factory(self) { FetchWorldDataUseCase(repository: self.indicatorRepository()) }
+    }
 }

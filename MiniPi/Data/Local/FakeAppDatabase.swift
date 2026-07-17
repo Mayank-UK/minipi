@@ -274,4 +274,94 @@ final class FakeAppDatabase: LocalDataStore {
             throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceForexOverview")
         }
     }
+
+    // MARK: - Crypto cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake crypto data (house rule).
+
+    private var cachedCryptoOverview: CryptoMarketOverview?
+
+    func fetchCryptoOverview() throws -> CryptoMarketOverview? {
+        logger.debug("FakeAppDatabase: fetchCryptoOverview called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedCryptoOverview
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchCryptoOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchCryptoOverview")
+        }
+    }
+
+    func replaceCryptoOverview(_ overview: CryptoMarketOverview) throws {
+        logger.debug("FakeAppDatabase: replaceCryptoOverview called for \(overview.quoteLabel)")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedCryptoOverview = overview
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceCryptoOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceCryptoOverview")
+        }
+    }
+
+    // MARK: - AI model cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake AI data (house rule).
+
+    private var cachedAIModelCatalog: AIModelCatalog?
+
+    func fetchAIModelCatalog() throws -> AIModelCatalog? {
+        logger.debug("FakeAppDatabase: fetchAIModelCatalog called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedAIModelCatalog
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchAIModelCatalog")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchAIModelCatalog")
+        }
+    }
+
+    func replaceAIModelCatalog(_ catalog: AIModelCatalog) throws {
+        logger.debug("FakeAppDatabase: replaceAIModelCatalog called for \(catalog.models.count) models")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedAIModelCatalog = catalog
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceAIModelCatalog")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceAIModelCatalog")
+        }
+    }
+
+    // MARK: - World Bank (Indicators) cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake indicator data (house rule).
+
+    private var cachedWorldData: WorldDataCatalog?
+
+    func fetchWorldData() throws -> WorldDataCatalog? {
+        logger.debug("FakeAppDatabase: fetchWorldData called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedWorldData
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchWorldData")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchWorldData")
+        }
+    }
+
+    func replaceWorldData(_ catalog: WorldDataCatalog) throws {
+        logger.debug("FakeAppDatabase: replaceWorldData called for \(catalog.countries.count) countries")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedWorldData = catalog
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceWorldData")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceWorldData")
+        }
+    }
 }

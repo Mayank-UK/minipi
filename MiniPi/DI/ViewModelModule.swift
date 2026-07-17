@@ -118,13 +118,29 @@ extension Container {
     
     @MainActor
     var cryptoViewModel: Factory<CryptoViewModel> {
-        Factory(self) { CryptoViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            CryptoViewModel(
+                logger: self.viewModelLogger(),
+                fetchOverview: self.fetchCryptoOverviewUseCase(),
+                price: self.cryptoPriceUseCase(),
+                prices: self.cryptoPricesUseCase(),
+                candles: self.cryptoCandlesUseCase(),
+                searchCrypto: self.searchCryptoUseCase(),
+                watchlist: self.cryptoWatchlistStore()
+            )
+        }
             .scope(.singleton)
     }
 
     /// Persistent watchlist for the Forex "Watchlist" tab (UserDefaults-backed).
     var forexWatchlistStore: Factory<ForexWatchlistStore> {
         Factory(self) { ForexWatchlistStore() }
+            .scope(.singleton)
+    }
+
+    /// Persistent watchlist for the Crypto "Watchlist" tab (UserDefaults-backed).
+    var cryptoWatchlistStore: Factory<CryptoWatchlistStore> {
+        Factory(self) { CryptoWatchlistStore() }
             .scope(.singleton)
     }
 
@@ -147,14 +163,24 @@ extension Container {
     
     @MainActor
     var aiModelsViewModel: Factory<AIModelsViewModel> {
-        Factory(self) { AIModelsViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            AIModelsViewModel(
+                logger: self.viewModelLogger(),
+                fetchCatalog: self.fetchAIModelCatalogUseCase()
+            )
+        }
             .scope(.singleton)
     }
     
     
     @MainActor
     var indicatorsViewModel: Factory<IndicatorsViewModel> {
-        Factory(self) { IndicatorsViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            IndicatorsViewModel(
+                logger: self.viewModelLogger(),
+                fetchWorldData: self.fetchWorldDataUseCase()
+            )
+        }
             .scope(.singleton)
     }
     
