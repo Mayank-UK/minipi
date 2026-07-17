@@ -18,6 +18,7 @@ final class FakeAppDatabase: LocalDataStore {
     private var cachedAsteroids: [Asteroid] = []
     private var cachedEarthquakes: [Earthquake] = []
     private var cachedForecast: WeatherForecast?
+    private var cachedMarketOverview: StockMarketOverview?
     private let logger: AppLoggerProtocol
 
     // Scenario is supplied by the DI module from AppConfiguration (single source of truth) — no
@@ -213,6 +214,64 @@ final class FakeAppDatabase: LocalDataStore {
             throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceForecast")
         case .connectionFailed:
             throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceForecast")
+        }
+    }
+
+    // MARK: - Stocks cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake stocks data (house rule).
+
+    func fetchMarketOverview() throws -> StockMarketOverview? {
+        logger.debug("FakeAppDatabase: fetchMarketOverview called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedMarketOverview
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchMarketOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchMarketOverview")
+        }
+    }
+
+    func replaceMarketOverview(_ overview: StockMarketOverview) throws {
+        logger.debug("FakeAppDatabase: replaceMarketOverview called for \(overview.country)")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedMarketOverview = overview
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceMarketOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceMarketOverview")
+        }
+    }
+
+    // MARK: - Forex cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake forex data (house rule).
+
+    private var cachedForexOverview: ForexMarketOverview?
+
+    func fetchForexOverview() throws -> ForexMarketOverview? {
+        logger.debug("FakeAppDatabase: fetchForexOverview called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedForexOverview
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchForexOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchForexOverview")
+        }
+    }
+
+    func replaceForexOverview(_ overview: ForexMarketOverview) throws {
+        logger.debug("FakeAppDatabase: replaceForexOverview called for \(overview.baseLabel)")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedForexOverview = overview
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceForexOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceForexOverview")
         }
     }
 }

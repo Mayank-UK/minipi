@@ -84,4 +84,22 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    // Finnhub needs a token (AppConfiguration.shared.stocksApiKey). No fake stocks
+    // data source (house rule), so this is always the real implementation.
+    var stocksRemoteDataSource: Factory<any StocksRemoteDataSource> {
+        Factory(self) {
+            StocksRemoteDataSourceImpl(client: self.httpClient()) as any StocksRemoteDataSource
+        }
+        .scope(.singleton)
+    }
+
+    // Yahoo Finance forex pairs (`=X` suffix, no key). No fake forex data source
+    // (house rule), so this is always the real implementation.
+    var forexRemoteDataSource: Factory<any ForexRemoteDataSource> {
+        Factory(self) {
+            ForexRemoteDataSourceImpl(client: self.httpClient()) as any ForexRemoteDataSource
+        }
+        .scope(.singleton)
+    }
 }

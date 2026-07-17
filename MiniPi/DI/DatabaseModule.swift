@@ -49,4 +49,14 @@ extension Container {
         Factory(self) { self.localStore() as any WeatherLocalDataSource }
             .scope(.singleton)
     }
+
+    var stocksLocalDataSource: Factory<any StocksLocalDataSource> {
+        Factory(self) { self.localStore() as any StocksLocalDataSource }
+            .scope(.singleton)
+    }
+
+    var forexLocalDataSource: Factory<any ForexLocalDataSource> {
+        Factory(self) { self.localStore() as any ForexLocalDataSource }
+            .scope(.singleton)
+    }
 }

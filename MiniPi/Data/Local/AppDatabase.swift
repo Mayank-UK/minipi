@@ -40,10 +40,22 @@ protocol WeatherLocalDataSource {
     func replaceForecast(_ forecast: WeatherForecast) throws
 }
 
+protocol StocksLocalDataSource {
+    /// The last cached market overview (Home/Stats dataset). `nil` when nothing is cached.
+    func fetchMarketOverview() throws -> StockMarketOverview?
+    func replaceMarketOverview(_ overview: StockMarketOverview) throws
+}
+
+protocol ForexLocalDataSource {
+    /// The last cached forex overview (Home/Stats dataset). `nil` when nothing is cached.
+    func fetchForexOverview() throws -> ForexMarketOverview?
+    func replaceForexOverview(_ overview: ForexMarketOverview) throws
+}
+
 /// Union of every feature's local-data-source protocol — what a concrete store
 /// (AppDatabase, FakeAppDatabase) conforms to. Resolved once in `DatabaseModule`;
 /// repositories receive the narrow slice they depend on.
-protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource {}
+protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource, StocksLocalDataSource, ForexLocalDataSource {}
 
 // MARK: - Concrete in-memory store
 
@@ -56,6 +68,8 @@ final class AppDatabase: LocalDataStore {
     private var cachedAsteroids: [Asteroid] = []
     private var cachedEarthquakes: [Earthquake] = []
     private var cachedForecast: WeatherForecast?
+    private var cachedMarketOverview: StockMarketOverview?
+    private var cachedForexOverview: ForexMarketOverview?
 
     private init(logger: AppLoggerProtocol = Container.shared.databaseLogger()) {
         self.logger = logger
@@ -107,5 +121,25 @@ final class AppDatabase: LocalDataStore {
     func replaceForecast(_ forecast: WeatherForecast) throws {
         logger.debug("Caching forecast for \(forecast.location.name) (in-memory)")
         cachedForecast = forecast
+    }
+
+    func fetchMarketOverview() throws -> StockMarketOverview? {
+        logger.debug("Fetching cached market overview (in-memory)")
+        return cachedMarketOverview
+    }
+
+    func replaceMarketOverview(_ overview: StockMarketOverview) throws {
+        logger.debug("Caching market overview for \(overview.country) (in-memory)")
+        cachedMarketOverview = overview
+    }
+
+    func fetchForexOverview() throws -> ForexMarketOverview? {
+        logger.debug("Fetching cached forex overview (in-memory)")
+        return cachedForexOverview
+    }
+
+    func replaceForexOverview(_ overview: ForexMarketOverview) throws {
+        logger.debug("Caching forex overview vs \(overview.baseLabel) (in-memory)")
+        cachedForexOverview = overview
     }
 }

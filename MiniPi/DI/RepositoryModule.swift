@@ -55,4 +55,26 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    var stocksRepository: Factory<StocksRepository> {
+        Factory(self) {
+            StocksRepositoryImplementation(
+                remote: self.stocksRemoteDataSource(),
+                local: self.stocksLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
+
+    var forexRepository: Factory<ForexRepository> {
+        Factory(self) {
+            ForexRepositoryImplementation(
+                remote: self.forexRemoteDataSource(),
+                local: self.forexLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
 }

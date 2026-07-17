@@ -56,4 +56,48 @@ extension Container {
     var searchCitiesUseCase: Factory<SearchCitiesUseCase> {
         Factory(self) { SearchCitiesUseCase(repository: self.weatherRepository()) }
     }
+
+    var fetchMarketOverviewUseCase: Factory<FetchMarketOverviewUseCase> {
+        Factory(self) { FetchMarketOverviewUseCase(repository: self.stocksRepository()) }
+    }
+
+    var quoteUseCase: Factory<QuoteUseCase> {
+        Factory(self) { QuoteUseCase(repository: self.stocksRepository()) }
+    }
+
+    var quotesUseCase: Factory<QuotesUseCase> {
+        Factory(self) { QuotesUseCase(repository: self.stocksRepository()) }
+    }
+
+    var candlesUseCase: Factory<CandlesUseCase> {
+        Factory(self) { CandlesUseCase(repository: self.stocksRepository()) }
+    }
+
+    var searchStocksUseCase: Factory<SearchStocksUseCase> {
+        Factory(self) { SearchStocksUseCase(repository: self.stocksRepository()) }
+    }
+
+    var stockProfileUseCase: Factory<StockProfileUseCase> {
+        Factory(self) { StockProfileUseCase(repository: self.stocksRepository()) }
+    }
+
+    var fetchForexOverviewUseCase: Factory<FetchForexOverviewUseCase> {
+        Factory(self) { FetchForexOverviewUseCase(repository: self.forexRepository()) }
+    }
+
+    var forexRateUseCase: Factory<ForexRateUseCase> {
+        Factory(self) { ForexRateUseCase(repository: self.forexRepository()) }
+    }
+
+    var forexRatesUseCase: Factory<ForexRatesUseCase> {
+        Factory(self) { ForexRatesUseCase(repository: self.forexRepository()) }
+    }
+
+    var forexCandlesUseCase: Factory<ForexCandlesUseCase> {
+        Factory(self) { ForexCandlesUseCase(repository: self.forexRepository()) }
+    }
+
+    var searchForexUseCase: Factory<SearchForexUseCase> {
+        Factory(self) { SearchForexUseCase(repository: self.forexRepository()) }
+    }
 }

@@ -86,9 +86,33 @@ extension Container {
     }
     
     
+    /// Persistent watchlist for the Stocks "Watchlist" tab (UserDefaults-backed).
+    var stocksWatchlistStore: Factory<StocksWatchlistStore> {
+        Factory(self) { StocksWatchlistStore() }
+            .scope(.singleton)
+    }
+
+    /// Persistent "last selected country" for the Stocks Home tab (UserDefaults-backed).
+    var stocksCountryStore: Factory<StocksCountryStore> {
+        Factory(self) { StocksCountryStore() }
+            .scope(.singleton)
+    }
+
     @MainActor
     var stocksViewModel: Factory<StocksViewModel> {
-        Factory(self) { StocksViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            StocksViewModel(
+                logger: self.viewModelLogger(),
+                fetchMarketOverview: self.fetchMarketOverviewUseCase(),
+                quote: self.quoteUseCase(),
+                quotes: self.quotesUseCase(),
+                candles: self.candlesUseCase(),
+                searchStocks: self.searchStocksUseCase(),
+                profile: self.stockProfileUseCase(),
+                watchlist: self.stocksWatchlistStore(),
+                countryStore: self.stocksCountryStore()
+            )
+        }
             .scope(.singleton)
     }
     
@@ -97,10 +121,26 @@ extension Container {
         Factory(self) { CryptoViewModel(logger: self.viewModelLogger()) }
             .scope(.singleton)
     }
-    
+
+    /// Persistent watchlist for the Forex "Watchlist" tab (UserDefaults-backed).
+    var forexWatchlistStore: Factory<ForexWatchlistStore> {
+        Factory(self) { ForexWatchlistStore() }
+            .scope(.singleton)
+    }
+
     @MainActor
     var forexViewModel: Factory<ForexViewModel> {
-        Factory(self) { ForexViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            ForexViewModel(
+                logger: self.viewModelLogger(),
+                fetchOverview: self.fetchForexOverviewUseCase(),
+                rate: self.forexRateUseCase(),
+                rates: self.forexRatesUseCase(),
+                candles: self.forexCandlesUseCase(),
+                searchForex: self.searchForexUseCase(),
+                watchlist: self.forexWatchlistStore()
+            )
+        }
             .scope(.singleton)
     }
     
