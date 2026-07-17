@@ -110,4 +110,15 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    var libraryRepository: Factory<LibraryRepository> {
+        Factory(self) {
+            LibraryRepositoryImplementation(
+                remote: self.libraryRemoteDataSource(),
+                local: self.libraryLocalDataSource(),
+                logger: self.repositoryLogger()
+            )
+        }
+        .scope(.singleton)
+    }
 }

@@ -364,4 +364,34 @@ final class FakeAppDatabase: LocalDataStore {
             throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceWorldData")
         }
     }
+
+    // MARK: - Library (Open Library) cache
+    // Minimal conformance to keep `LocalDataStore` compiling. Not exercised in dev
+    // (USE_FAKE_DATABASE=NO); no real fake library data (house rule).
+
+    private var cachedLibraryOverview: LibraryHomeOverview?
+
+    func fetchLibraryOverview() throws -> LibraryHomeOverview? {
+        logger.debug("FakeAppDatabase: fetchLibraryOverview called with scenario: \(scenario)")
+        switch scenario {
+        case .success, .empty, .writeError:
+            return cachedLibraryOverview
+        case .readError:
+            throw DatabaseException.readFailed(cause: nil, context: "FakeAppDatabase.fetchLibraryOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.fetchLibraryOverview")
+        }
+    }
+
+    func replaceLibraryOverview(_ overview: LibraryHomeOverview) throws {
+        logger.debug("FakeAppDatabase: replaceLibraryOverview called for \(overview.trendingBooks.count) trending books")
+        switch scenario {
+        case .success, .empty, .readError:
+            cachedLibraryOverview = overview
+        case .writeError:
+            throw DatabaseException.writeFailed(cause: nil, context: "FakeAppDatabase.replaceLibraryOverview")
+        case .connectionFailed:
+            throw DatabaseException.connectionFailed(cause: nil, context: "FakeAppDatabase.replaceLibraryOverview")
+        }
+    }
 }

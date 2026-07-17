@@ -129,4 +129,13 @@ extension Container {
         }
         .scope(.singleton)
     }
+
+    // Open Library public API (no key, no browser User-Agent). No fake data source
+    // (house rule), so this is always the real implementation.
+    var libraryRemoteDataSource: Factory<any LibraryRemoteDataSource> {
+        Factory(self) {
+            LibraryRemoteDataSourceImpl(client: self.httpClient()) as any LibraryRemoteDataSource
+        }
+        .scope(.singleton)
+    }
 }

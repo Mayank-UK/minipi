@@ -186,7 +186,22 @@ extension Container {
     
     @MainActor
     var libraryViewModel: Factory<LibraryViewModel> {
-        Factory(self) { LibraryViewModel(logger: self.viewModelLogger()) }
+        Factory(self) {
+            LibraryViewModel(
+                logger: self.viewModelLogger(),
+                fetchOverview: self.fetchLibraryOverviewUseCase(),
+                searchLibrary: self.searchLibraryUseCase(),
+                trending: self.trendingLibraryUseCase(),
+                fetchWork: self.fetchLibraryWorkUseCase(),
+                watchlist: self.libraryWatchlistStore()
+            )
+        }
+            .scope(.singleton)
+    }
+
+    /// Persistent watchlist for the Library "Watchlist" tab (UserDefaults-backed).
+    var libraryWatchlistStore: Factory<LibraryWatchlistStore> {
+        Factory(self) { LibraryWatchlistStore() }
             .scope(.singleton)
     }
 

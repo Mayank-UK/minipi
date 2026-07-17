@@ -70,10 +70,16 @@ protocol IndicatorLocalDataSource {
     func replaceWorldData(_ catalog: WorldDataCatalog) throws
 }
 
+protocol LibraryLocalDataSource {
+    /// The last cached library home overview (trending books + popular subjects). `nil` when nothing is cached.
+    func fetchLibraryOverview() throws -> LibraryHomeOverview?
+    func replaceLibraryOverview(_ overview: LibraryHomeOverview) throws
+}
+
 /// Union of every feature's local-data-source protocol — what a concrete store
 /// (AppDatabase, FakeAppDatabase) conforms to. Resolved once in `DatabaseModule`;
 /// repositories receive the narrow slice they depend on.
-protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource, StocksLocalDataSource, ForexLocalDataSource, CryptoLocalDataSource, AIModelLocalDataSource, IndicatorLocalDataSource {}
+protocol LocalDataStore: PostLocalDataSource, AsteroidLocalDataSource, EarthquakeLocalDataSource, WeatherLocalDataSource, StocksLocalDataSource, ForexLocalDataSource, CryptoLocalDataSource, AIModelLocalDataSource, IndicatorLocalDataSource, LibraryLocalDataSource {}
 
 // MARK: - Concrete in-memory store
 
@@ -91,6 +97,7 @@ final class AppDatabase: LocalDataStore {
     private var cachedCryptoOverview: CryptoMarketOverview?
     private var cachedAIModelCatalog: AIModelCatalog?
     private var cachedWorldData: WorldDataCatalog?
+    private var cachedLibraryOverview: LibraryHomeOverview?
 
     private init(logger: AppLoggerProtocol = Container.shared.databaseLogger()) {
         self.logger = logger
@@ -192,5 +199,15 @@ final class AppDatabase: LocalDataStore {
     func replaceWorldData(_ catalog: WorldDataCatalog) throws {
         logger.debug("Caching World Bank catalog: \(catalog.countries.count) countries, \(catalog.observations.count) data points (in-memory)")
         cachedWorldData = catalog
+    }
+
+    func fetchLibraryOverview() throws -> LibraryHomeOverview? {
+        logger.debug("Fetching cached library overview (in-memory)")
+        return cachedLibraryOverview
+    }
+
+    func replaceLibraryOverview(_ overview: LibraryHomeOverview) throws {
+        logger.debug("Caching library overview: \(overview.trendingBooks.count) trending, \(overview.popularSubjects.count) subjects (in-memory)")
+        cachedLibraryOverview = overview
     }
 }

@@ -13,8 +13,8 @@
 
 - Engineering notes for AI (read this before building any feature)
     - Implementation status
-        - Done: NASA NEO (Asteroids), USGS Earthquake, Weather (WeatherAPI.com), Stocks (Yahoo Finance), Forex (Yahoo Finance), Crypto (Yahoo Finance), AI Models (OpenRouter)
-        - Next: Indicators, then Library
+        - Done: NASA NEO (Asteroids), USGS Earthquake, Weather (WeatherAPI.com), Stocks (Yahoo Finance), Forex (Yahoo Finance), Crypto (Yahoo Finance), AI Models (OpenRouter), Indicators (World Bank), Library (Open Library)
+        - Next: — (none planned)
     - Canonical template = the Asteroids feature. Every new feature should mirror it layer-for-layer. File map (earthquake is the second worked example):
         - Domain: Models/<Feature>.swift, RepositoryInterfaces/<Feature>Repository.swift, UseCases/<Feature>/*.swift
         - Data: Remote/DTOs/<Feature>Dto.swift (Codable + `to<Domain>()`), Remote/<Feature>RemoteDataSource.swift (protocol + Impl), RepositoryImpls/<Feature>RepositoryImpl.swift
@@ -23,7 +23,7 @@
         - UI: Screens/<Section>/<Feature>/<Feature>View.swift (tab shell) + <Feature>ViewModel.swift + Tabs/*.swift + Scene/*SceneView.swift for any 3D; shared rows/sheets/badges in UI/Components
     - Repository pattern: remote-first, persist to local on success, fall back to cache on network/server error. Reuse the shared `safeRepositoryCall` + `ExceptionMapper` + the `Failure` family — never invent a new error mechanism. List fetches are cache-backed; single lookups/queries are one-shot.
     - Networking: every remote data source builds on `HTTPClient.get(_:as:)` (runs `guardedApiCall`, maps URLError/DecodingError). API keys/base URLs come from the per-environment xcconfig → Info.plist → AppConfiguration.shared (e.g. `nasaApiKey`). Hardcode a feature's own base URL constant in its remote data source (like `nasaBaseURL`/`usgsBaseURL`) when it doesn't need a key.
-    - Reusable components already in UI/Components (check before creating new): PageScaffold, StatTile, Chip/ChipLabel, LiveDataBadge, ErrorView, ErrorSnackbar, AppDrawer, ResponsiveLayout, HazardBadge (asteroid), MagnitudeBadge + EarthquakeRow + EarthquakeDetailSheet (earthquake). Convention: single-file UI = private view in that file; multi-file = global component.
+    - Reusable components already in UI/Components (check before creating new): PageScaffold, StatTile, Chip/ChipLabel, LiveDataBadge, ErrorView, ErrorSnackbar, AppDrawer, ResponsiveLayout, YearPicker (indicators), HazardBadge (asteroid), MagnitudeBadge + EarthquakeRow + EarthquakeDetailSheet (earthquake), LibraryRow (library). Convention: single-file UI = private view in that file; multi-file = global component.
         - Row component convention: an optional `onToggleSaved` closure → shows a save/remove star; omit it → shows a detail chevron. Save from the detail sheet, not necessarily from every list.
         - ⚠️ KNOWN RECURRING MISTAKE (happened in Weather AND Stocks — do NOT repeat): list rows must show a `chevron.right` on the trailing side to signal they are tappable, NOT a favourite/save star. The star (`onToggleSaved`) belongs ONLY in the detail sheet. Saving/un-saving from a list row is wrong — pass NO `onToggleSaved` to rows in Home / Markets / Search / Watchlist lists; the row then renders the chevron automatically. If a row shows a star where a `>` should be, that is this bug — fix it by removing `onToggleSaved`/`isSaved` from that row call, don't re-add the star.
         - ⚠️ Index values are POINTS, not money: rows/cards for `StockType.index` must use `StockQuote.formattedPoints` (plain grouped number, e.g. "24,500.35"), never `priceText(currency:)` — showing "₹24,500"/"$5,400" for an index is wrong. Currency formatting is for stocks/ETFs/commodities only.
@@ -72,6 +72,33 @@
         - Search is synchronous client-side over the cached catalog (NO debounce `Task` — the catalog is in-memory, unlike the server-backed Yahoo search). `searchFilters: Set<AIModelFilter>` = Open Source / Free / Multimodal / Vision / Tools (AND across filters); text matches name/id/provider. There is no `searchFailure` state because it never hits the network.
         - Compare: pick 2–4 models (max `compareLimit = 4`) via a picker `.sheet` (`compareCandidates` = catalog minus selected, client-side `compareQuery` filter). The comparison is a horizontal scroll of per-model `CompareCard`s (each shows the SAME rows so values line up across columns): Context, Prompt $/M, Completion $/M, Open Source, Modalities, Tools, Reasoning, Intelligence, Coding, Agentic. An "+ Add model" dashed card shows when `canAddToCompare`.
         - `AIModelRow` is the GLOBAL multi-file row (Ranking/Search/Compare) — single consumer `AIModelDetailView` is feature-local. Detail is INSTANT (no sub-fetch): the catalog already carries every model's full data, so `openDetail` just sets `detailModel` and the sheet reads straight from it (no `detailQuote`/`detailCandle`/`loadDetail` network flow like Crypto). Cache type = `AIModelCatalog` (`AIModelLocalDataSource` added to the `LocalDataStore` union + minimal `FakeAppDatabase` conformance).
+    - Indicators feature specifics (World Bank Open Data — read before touching Indicators):
+        - Provider = World Bank Open Data API, NO API key. Hardcode `worldBankBaseURL = "https://api.worldbank.org/v2"` in `IndicatorRemoteDataSourceImpl` (like `usgsBaseURL`/`openRouterBaseURL`); no xcconfig/AppConfiguration entry, no special User-Agent needed.
+        - Two endpoints: `/country?format=json&per_page=400` → the live country list (the `toCountry()` mapper drops aggregates where `region.value == "Aggregates"`, leaving ~217 real countries); and `/country/all/indicator/{code}?format=json&per_page=10000&date=2015:2023` → the FULL yearly series for one indicator (per_page 10000 → single page). The repo fans out one call per curated indicator via a TaskGroup and DROPS per-indicator failures (unknown/archived indicator / rate-limited), so one bad indicator never blanks the feature — the same drop-on-failure pattern as the Yahoo bulk-quote and weather globe-points fetches.
+        - 5 tabs — Home · Ranking · Search · Compare · Stats — and NO Watchlist (so NO `WatchlistStore`, and `CountryRow` ALWAYS renders the chevron, never a save star — the recurring-mistake rule satisfied by construction). `IndicatorsTab = { home, ranking, search, compare, stats }`.
+        - Domain model: `Country` (ISO3 `id`, emoji `flag` derived from iso2, region/income/capital); `Indicator` (curated WB code + name + `IndicatorCategory` + `IndicatorFormat` + `higherIsBetter` + `sourceNote`); `Observation` (country × indicator × year × value); `WorldSummary` + `WorldDataCatalog` (cache type ≈ `AIModelCatalog`). Curated set = `CuratedIndicators.all` — IMPORTANT development metrics across Economy / Health / Education / Environment (life expectancy, GDP per capita, poverty $2.15/day, population, under-5 mortality, drinking water, literacy, primary enrollment, electricity access, forest area). `CuratedIndicators.headline` (life expectancy) drives Home's Top Performers. Adding an indicator = one line in `CuratedIndicators.all` (the repo loops over these codes).
+        - ⚠️ VALUES ARE MIXED UNITS, NOT ONE-SIZE — Indicators' own formatting rule (sibling of the Stocks "index = points" / Forex "rates = points" / Crypto "money w/ adaptive precision" rules). Indicators are percentages, currency, years, per-1000 rates AND counts all in one feature, so formatting is per `IndicatorFormat` via `Indicator.formatValue(_:)`: `.percent` ("87.3%"), `.currency` (GDP per capita "$45,230", grouped no decimals), `.years` ("83.2 yrs"), `.perThousand` (under-5 mortality "3.5 per 1k"), `.count` (population compact "1.43B"/"340M"). Never a single currency symbol everywhere. `higherIsBetter` drives Ranking/Stats sort direction — poverty & under-5 mortality sort ASCENDING (lower is better).
+        - ⚠️ YEAR SELECTION: the catalog stores the FULL yearly series (every country × indicator × year in the window), NOT latest-only, so the user can pick a year. The VM builds a `["countryId|indicatorId": [year: value]]` index once on load (`ingest`); `value(for:indicatorId:year:)` with `year == nil` = each country's latest (max year), a concrete year requires that exact year to be present (countries missing that year drop out of the ranking). The `YearPicker` component (global, UI/Components) sits on the Ranking / Stats / Compare chip bars; Home always shows latest. `availableYears` is derived from the data.
+        - ⚠️ per_page TYPING GOTCHA (cost real debugging time): the World Bank API returns `per_page` as a STRING for small values but a NUMBER for large ones. A page-meta DTO typed `String?` throws a `.typeMismatch` → DecodingException → the indicator is dropped. With per_page=10000 EVERY observation call failed, leaving Countries=217 but Data Points=0 (all highlight cards "—"). FIX: `WorldBankPageMetaDTO` is an empty `Decodable` (declares no keys) because the meta element is consumed and discarded — Decodable ignores extra keys and is immune to the inconsistent typing.
+        - ⚠️ BOM GOTCHA: World Bank occasionally prefixes its JSON with a UTF-8 BOM (`EF BB BF`) → `JSONDecoder` throws ("isn't in the correct format") → indicator dropped. `IndicatorRemoteDataSourceImpl` therefore does NOT use the shared `HTTPClient.get(_:as:)`; it has a dedicated `get(_:as:)` helper that builds the URLRequest, calls `client.send` inside `guardedApiCall` (so URLError/DecodingError still map to the app's exception family), strips a leading BOM, then decodes.
+        - ⚠️ HETEROGENEOUS ENVELOPE: WB returns a 2-element top-level array `[ {page meta}, [records] ]`. `WorldBankResponseDTO<T>` decodes it with an unkeyed container — read the meta object, then decode `[T]` (guarded by `isAtEnd` for empty responses).
+        - ⚠️ ARCHIVED INDICATORS: WB archives/renames codes — e.g. `EN.ATM.CO2E.PC` (CO2 per capita) now returns `{"message":[{"id":"175","key":"Invalid format","value":"The indicator was not found..."}]}`. Drop-on-failure handles it (the indicator just won't appear), but ALWAYS verify a candidate code has real country coverage before adding it to `CuratedIndicators` (curl `/country/all/indicator/{code}?format=json&per_page=10000&date=2015:2023` and count non-null `countryiso3code` rows).
+        - Aggregate filtering: observation rows include World Bank aggregates (World, EU, income groups, "Africa Eastern and Southern"…) — the repo filters observations to the real-country id set before caching, and ranking iterates `catalog.countries`, so aggregates never leak into lists.
+        - `CountryRow` is the GLOBAL multi-file row (Ranking / Compare picker / Home Top Performers); single consumer `CountryDetailView` is feature-local and INSTANT (no sub-fetch — reads its indicator values straight from the cached catalog). The IndicatorRow is single-file (Search only) → a private view in `IndicatorsSearchTab`, not a global component. Mapper names `WorldBankCountryDTO.toCountry()` / `WorldBankObservationDTO.toObservation(indicatorCode:)` are unique (no `toQuote`/`toCandle` ambiguity). Cache type = `WorldDataCatalog` (`IndicatorLocalDataSource` added to the `LocalDataStore` union + minimal `FakeAppDatabase` conformance).
+        - Home StatTiles are TAPPABLE (Countries→Ranking, Indicators→Search, Latest Year→Stats, Data Points→Stats) and the Key-Highlight tiles jump to that indicator's Ranking; same convention applied to the AI Models Home StatTiles. `focusIndicator(_:)` sets the Ranking indicator + switches tab.
+    - Library feature specifics (Open Library — read before touching Library):
+        - Provider = Open Library public API, NO API key. Hardcode `openLibraryBaseURL = "https://openlibrary.org"` in `LibraryRemoteDataSourceImpl` (like `usgsBaseURL`/`openRouterBaseURL`); book covers via a SEPARATE host `https://covers.openlibrary.org/b/id/{coverId}-M.jpg` (or `/b/olid/{coverEditionKey}-M.jpg` as a fallback). No xcconfig/AppConfiguration entry, no special User-Agent (unlike Yahoo), no BOM strip (unlike World Bank — Open Library returns clean JSON). Uses the plain `HTTPClient.get(_:as:)` overload (no headers variant).
+        - Endpoints: `/search.json?q=|author=|subject=&fields=...&limit=` (works, single shape — drives books/author/subject Search scopes), `/trending/{period}.json?limit=` (Ranking), `/subjects/{slug}.json` (Home popular subjects — returns `work_count` + sample works), `/works/{OLID}.json` (detail sheet). `/trending/authors.json` does NOT exist (HTTP 500) → "Popular authors" is derived CLIENT-SIDE from the trending works list (deduped by author, counted by appearances). `/stats.json` is flaky (504) → the Home "Books" StatTile count is the AGGREGATE of the popular subjects' `work_count` (`LibraryHomeOverview.bookCount`), NOT a global stats fetch.
+        - ⚠️ TRENDING PERIODS: `now, daily, weekly, monthly, yearly` return 200; `forever` and `today` return HTTP 500 — they are deliberately excluded from `LibraryTrendingPeriod`. Verify a candidate period's status code before adding it.
+        - ⚠️ DESCRIPTION GOTCHA (the WB heterogeneous-envelope analogue): the work-detail `description` is POLYMORPHIC — either a plain String OR an object `{ "type": "/type/text", "value": "…" }`. `DescriptionDTO` decodes from a single-value container and returns `.value` when an object, so the domain model (`LibraryBookDetail.description`) only ever sees a String and never crashes on shape variance.
+        - Mappers are named `toLibrary*` (`LibraryWorkDTO.toLibraryWork()`, `LibrarySubjectResponseDTO.toSubject(slug:)`, `LibraryWorkDetailDTO.toLibraryBookDetail(id:fallbackTitle:)`) — the same anti-collision convention as Forex/Crypto (`toQuote`/`toCandle`/`toPair`/`toCoin` already exist elsewhere). The OLID is parsed from the API `key` (`/works/OL45804W` → bare id `OL45804W`) via `LibraryWorkDTO.bareOlid(from:)`; rows with no title / no parseable OLID are dropped.
+        - 4 tabs — Home · Search · Ranking · Watchlist (`LibraryTab = { home, search, ranking, watchlist }`). NO Stats / Compare / Profile (decided: the md "5 tabs" line was a copy-paste artifact; the 4 enumerated tabs are canonical).
+        - Domain: `LibraryWork` (id, key, title, authors, authorIds, coverId/coverEditionKey, firstPublishYear, editionCount, subjects, language, ebookAccess; derived `coverURL`/`primaryAuthor`/`subtitle`); `LibrarySubject` (slug, displayName, workCount + `compactCount` "1.2M"/"940K"); `LibraryBookDetail`; `LibraryHomeOverview { trendingBooks, popularSubjects }` (cache type, mirrors `CryptoMarketOverview`); `LibraryAuthorSummary` (name, count, initials — Search discover only); `LibraryTrendingPeriod` / `LibrarySearchScope` enums.
+        - Repository: Home overview is cache-backed (`safeRepositoryCall` + `cachedFallback`, mirrors Crypto exactly); the popular-subjects fan-out uses a TaskGroup and DROPS per-subject failures (archived/empty subject / rate-limited), falling back to a count-0 `LibrarySubject` so the grid still shows every curated tile + tap-to-search works — same drop-on-failure pattern as Yahoo bulk-quote / WB indicators. `search` / `trending` / `workDetail` are one-shot (no fallback).
+        - Search is SERVER-BACKED + debounced (350 ms `scheduleSearch`, like Yahoo search) — NOT client-side like AI Models/Indicators (the catalog is not pre-fetched). The scope chips Books/Authors/Subjects map to `/search.json` params (`q=`/`author=`/`subject=`); all three return the SAME work shape, so Search always renders one row type (`LibraryRow`/`LibraryWork`) — no author/subject-specific row needed for results.
+        - ⚠️ SEARCH DISCOVER (empty-query content — do NOT leave Search blank/looking-broken): when `searchQuery` is empty the Search tab shows scope-aware default content instead of a centered prompt: Books → "Popular right now" (trending works), Authors → "Popular authors" (derived client-side from trending, private author row), Subjects → "Popular subjects" grid (private subject tile). Tapping an author/subject tile calls `prefillSearch(scope:query:)` (sets scope + query + `scheduleSearch(immediate: true)`); the same method powers the Home subject shortcut. Switching scope with an empty box re-renders the matching discover section (no fetch needed beyond the one trending load).
+        - Home mirrors Indicators/AIModels: tappable StatTiles (Books→Search, Subjects→Search, Trending→Ranking, Watchlist→Watchlist) via `openTab(_:)`; a Trending books horizontal card rail (`BookCard`, single-file); and a Popular subjects grid (tap → `searchSubject(_:)`). `LiveDataBadge(source: "Open Library")`.
+        - `LibraryRow` is the GLOBAL multi-file row (Home/Search/Ranking/Watchlist) following the chevron-not-star convention (optional leading `rank` for the Ranking numbered list; covers via `AsyncImage` phase-closure form, same as `StocksDetailView`); saving happens from the `LibraryDetailView` toolbar star ONLY. `LibraryDetailView` is feature-local (single consumer), reads its header from the passed-in `LibraryWork` and loads `LibraryBookDetail` (description + subjects) on appear. `LibraryWatchlistStore` mirrors `CryptoWatchlistStore` (UserDefaults key `minipi.library.watchlist`, `LibrarySnapshot` slice). Cache type = `LibraryHomeOverview` (`LibraryLocalDataSource` added to the `LocalDataStore` union + minimal `FakeAppDatabase` conformance).
     - Design system (UI/DesignSystem/DesignSystem.swift): `@EnvironmentObject DesignSystem`, `cs = designSystem.colorScheme`. Semantic tokens include the "space" set (space, spaceSurface, orbitPrimary, orbitAccent, hazard, distanceSafe/Warn/Danger, onSpace). Fonts are Montserrat via `designSystem.types.*`. Sizes via `DesignSystem.Sizes.*`. `designSystem.shadow(for: .neoCard)`.
     - CRASH CLASS TO AVOID: never read an `@EnvironmentObject` off a throwaway view instance created outside the hierarchy (e.g. `SomeBadge(...).color` inside a computed property). It is nil → fatal/freeze. Expose a static helper that takes the `ColorScheme` explicitly (see `MagnitudeBadge.color(for:in:)`).
     - Build / verify
@@ -156,7 +183,7 @@
         ![Forex reference](/Users/mak/downloads/minipi/finance_section/forex.png)
 
 - Crypto implementation instructions
-    - Already implemented (Yahoo Finance, dash-form coins e.g. BTC-USD, no API key). Mirrors the Forex feature exactly, with a 4-tab structure (no Markets tab) and adaptive-precision money formatting instead of points. See "Engineering notes for AI" for the patterns and gotchas established while building it. Next feature to build is Indicators.
+    - Already implemented (Yahoo Finance, dash-form coins e.g. BTC-USD, no API key). Mirrors the Forex feature exactly, with a 4-tab structure (no Markets tab) and adaptive-precision money formatting instead of points. See "Engineering notes for AI" for the patterns and gotchas established while building it. Next feature to build is Library.
     - It also has tab structure like other implementations
     - It has 4 tabs:
         - Home
@@ -175,7 +202,7 @@
         ![Crypto reference](/Users/mak/downloads/minipi/finance_section/crypto.png)
 
 - AI model implementation instructions
-    - Already implemented (OpenRouter, no API key). Mirrors the Crypto feature's overview/cache pattern, with one catalog fetch and Ranking/Search/Compare derived client-side. 4 tabs (no Watchlist → no save star anywhere). See "Engineering notes for AI" for the patterns and gotchas established while building it. Next feature to build is Indicators.
+    - Already implemented (OpenRouter, no API key). Mirrors the Crypto feature's overview/cache pattern, with one catalog fetch and Ranking/Search/Compare derived client-side. 4 tabs (no Watchlist → no save star anywhere). See "Engineering notes for AI" for the patterns and gotchas established while building it. Next feature to build is Library.
     - It also has tab structure like other implementations
     - It has 4 tabs:
         - Home
@@ -196,40 +223,43 @@
     - Reference image
         ![AI models reference](/Users/mak/downloads/minipi/ai_section/ai_models.png)
 
-- Indicators
+- Indicators implementation instructions
+    - Already implemented (World Bank Open Data, no API key). Mirrors the AI Models overview/cache pattern, with one cache-backed catalog fetch (countries + curated indicators + the full yearly series) and Ranking / Search / Compare / Stats derived client-side. 5 tabs (no Watchlist → no save star anywhere); a YearPicker on Ranking/Stats/Compare switches between "Latest" and a specific year. See "Engineering notes for AI" → "Indicators feature specifics" for the patterns and gotchas (per_page typing, BOM, heterogeneous envelope, archived indicators, mixed-unit formatting). Next feature to build is Library.
     - It also has tab structure like other implementations
     - It has 5 tabs:
         - Home
-            - Showing data like indicators, countries, data points, etc
+            - Showing data like indicators, countries, data points, etc (StatTiles are tappable → jump to the relevant tab)
+            - Key highlights show the global average per curated indicator (Life expectancy, GDP per capita, Poverty, Population, etc.)
             - Look for reference image for getting better context
         - Ranking
-            - It shows ranking of different countries with different important filtering parameters applied like literacy, poverty, etc
-            - Any of these can be tapped to view more details
+            - It shows ranking of different countries with different important filtering parameters applied like literacy, poverty, etc (chip bar of indicators + a YearPicker)
+            - Any of these can be tapped to view more details (country detail sheet)
             - Look for reference image for getting better context
         - Search
-            - Search for indicators
-            - Any of these can be tapped to view more details
+            - Search for indicators, with category filters (Economy / Health / Education / Environment)
+            - Any of these can be tapped to focus that indicator on the Ranking tab
         - Compare
-            - This screens allows to compare multiple countries on different indicators
+            - This screens allows to compare multiple countries on different indicators (with a YearPicker)
             - Look for reference image for getting better context
         - Stats
-            - It shows data inside various graphs and charts
+            - It shows data inside various graphs and charts (Swift Charts bar chart of top countries for the selected indicator + year)
             - Look for reference image for getting better context
     - Reference image
         ![Indicators reference](/Users/mak/downloads/minipi/education_section/indicators.png)
 
 - Library
+    - Already implemented (Open Library, no API key). Server-backed search + watchlist (mirrors Crypto) blended with a catalog-style tappable-StatTile Home (mirrors Indicators/AIModels). See "Engineering notes for AI" → "Library feature specifics" for the patterns and gotchas (trending periods, polymorphic description, search discover, derived authors). Decided 4 tabs (Home · Search · Ranking · Watchlist) — the "5 tabs" line below was a copy-paste artifact; the 4 enumerated tabs are canonical.
     - It also has tab structure like other implementations
-    - It has 5 tabs:
+    - It has 4 tabs:
         - Home
-            - Shows data like books, authors, subjects, etc
+            - Shows data like books, authors, subjects, etc (StatTiles are tappable → jump to the relevant tab; Trending books rail + Popular subjects grid)
             - Look for reference image for getting better context
         - Search
-            - Search based on important filters like books, author, etc
+            - Search based on important filters like books, author, etc (scope chips Books/Authors/Subjects; empty-query shows scope-aware discover content, not a blank screen)
             - Any of these can be tapped to view more details
             - Look for reference image for getting better context
         - Ranking
-            - Ranking based on different parameters like fiction, etc
+            - Trending books across period windows (Now/Daily/Weekly/Monthly/Yearly), numbered
             - Any of these can be tapped to view more details
             - Look for reference image for getting better context
         - Watchlist

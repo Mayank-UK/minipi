@@ -74,4 +74,9 @@ extension Container {
         Factory(self) { self.localStore() as any IndicatorLocalDataSource }
             .scope(.singleton)
     }
+
+    var libraryLocalDataSource: Factory<any LibraryLocalDataSource> {
+        Factory(self) { self.localStore() as any LibraryLocalDataSource }
+            .scope(.singleton)
+    }
 }

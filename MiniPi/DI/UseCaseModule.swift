@@ -128,4 +128,20 @@ extension Container {
     var fetchWorldDataUseCase: Factory<FetchWorldDataUseCase> {
         Factory(self) { FetchWorldDataUseCase(repository: self.indicatorRepository()) }
     }
+
+    var fetchLibraryOverviewUseCase: Factory<FetchLibraryOverviewUseCase> {
+        Factory(self) { FetchLibraryOverviewUseCase(repository: self.libraryRepository()) }
+    }
+
+    var searchLibraryUseCase: Factory<SearchLibraryUseCase> {
+        Factory(self) { SearchLibraryUseCase(repository: self.libraryRepository()) }
+    }
+
+    var trendingLibraryUseCase: Factory<TrendingLibraryUseCase> {
+        Factory(self) { TrendingLibraryUseCase(repository: self.libraryRepository()) }
+    }
+
+    var fetchLibraryWorkUseCase: Factory<FetchLibraryWorkUseCase> {
+        Factory(self) { FetchLibraryWorkUseCase(repository: self.libraryRepository()) }
+    }
 }
