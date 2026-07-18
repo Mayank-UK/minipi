@@ -57,7 +57,7 @@ private func mapDecodingError(_ decodingError: DecodingError) -> DecodingExcepti
             cause: decodingError
         )
         
-    case .valueNotFound(let type, let context):
+    case .valueNotFound(_, let context):
         let fieldName = context.codingPath.map { $0.stringValue }.joined(separator: ".")
         return DecodingException.missingField(
             fieldName: fieldName,

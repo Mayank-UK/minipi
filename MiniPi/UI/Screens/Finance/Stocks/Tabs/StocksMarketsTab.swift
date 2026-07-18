@@ -90,7 +90,7 @@ struct StocksMarketsTab: View {
             Text("No \(viewModel.selectedSegment.title.lowercased()) for this market")
                 .font(designSystem.types.bodyMedium)
                 .foregroundStyle(cs.onSpace.opacity(0.5))
-            if let failure = viewModel.marketsFailure {
+            if viewModel.marketsFailure != nil {
                 Button("Retry") { Task { await viewModel.loadMarkets(force: true) } }
                     .font(designSystem.types.labelLarge)
                     .foregroundStyle(cs.orbitPrimary)

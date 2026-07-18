@@ -63,7 +63,7 @@ struct LibrarySearchTab: View {
                 .font(designSystem.types.bodyMedium)
                 .foregroundStyle(cs.onSpace)
                 .autocorrectionDisabled()
-                .onChange(of: viewModel.searchQuery) { _ in
+                .onChange(of: viewModel.searchQuery) { _, _ in
                     viewModel.scheduleSearch()
                 }
                 .submitLabel(.search)

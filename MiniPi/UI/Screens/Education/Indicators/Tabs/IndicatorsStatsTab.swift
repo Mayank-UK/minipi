@@ -24,7 +24,7 @@ struct IndicatorsStatsTab: View {
 
             if viewModel.isLoading && viewModel.catalog == nil {
                 ProgressView().tint(cs.orbitPrimary)
-            } else if let catalog = viewModel.catalog {
+            } else if viewModel.catalog != nil {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: DesignSystem.Sizes.md) {
                         indicatorBar

@@ -55,7 +55,7 @@ struct RootView<InitialView: View>: View {
                 }
         }
         
-            .onChange(of: effectiveScheme) { newScheme in
+            .onChange(of: effectiveScheme) { _, newScheme in
                 designSystem.updateColorScheme(
                     ColorScheme(swiftUIScheme: newScheme, dark: DarkColors.self, light: LightColors.self)
                 )

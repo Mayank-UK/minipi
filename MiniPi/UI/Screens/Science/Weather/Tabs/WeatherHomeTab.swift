@@ -129,7 +129,7 @@ struct WeatherHomeTab: View {
                 .foregroundStyle(cs.onSpace)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.words)
-                .onChange(of: viewModel.searchQuery) { _ in
+                .onChange(of: viewModel.searchQuery) { _, _ in
                     viewModel.scheduleSearch()
                 }
             if viewModel.isSearching {

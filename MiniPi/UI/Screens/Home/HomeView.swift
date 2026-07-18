@@ -16,49 +16,57 @@ struct HomeView: View {
     
     @ViewBuilder
     private func sectionTitle(title: String) -> some View {
-        Text(title)
-         .font(designSystem.types.titleLarge)
-         .frame(maxWidth: .infinity, alignment: .leading)
-         .padding(.leading, DesignSystem.Sizes.md)
+        HStack {
+            Text(title)
+                .font(designSystem.types.titleLarge)
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(designSystem.colorScheme.onBackground.opacity(0.3))
+        }
+        .padding(.horizontal, DesignSystem.Sizes.md)
     }
 
     @ViewBuilder
     private func links(links: [LinkData]) -> some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.flexible(), spacing: DesignSystem.Sizes.md),
-                GridItem(.flexible(), spacing: DesignSystem.Sizes.md)
-            ],
-            spacing: DesignSystem.Sizes.md
-        ) {
-            ForEach(links, id: \.self) { link in
-                Button {
-                    router.navigateTo(routePath: link.routePath)
-                } label: {
-                    // Rectangle establishes the square frame; the image overlays into it.
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.15))
-                        .aspectRatio(1, contentMode: .fit)
-                        .overlay {
-                            ZStack(alignment: .bottomLeading) {
-                                Image(link.image)
-                                    .resizable()
-                                    .scaledToFill()
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: DesignSystem.Sizes.md) {
+                ForEach(links, id: \.self) { link in
+                    Button {
+                        router.navigateTo(routePath: link.routePath)
+                    } label: {
+                        
+                        Image(link.image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: DesignSystem.Sizes.xxl + DesignSystem.Sizes.xl, height: DesignSystem.Sizes.xxl + DesignSystem.Sizes.xxl)
+                            .overlay(alignment: .bottomLeading) {
+                                ZStack(alignment: .bottomLeading) {
+                                    LinearGradient(
+                                        colors: [
+                                            .clear,
+                                            .black.opacity(0.2),
+                                            .black.opacity(0.75)
+                                        ],
+                                        startPoint: .center,
+                                        endPoint: .bottom
+                                    )
 
-                                LinearGradient(
-                                    colors: [.clear, .black.opacity(0.10)],
-                                    startPoint: .center,
-                                    endPoint: .bottom
-                                )
+                                    Text(link.title)
+                                        .font(designSystem.types.titleMedium)
+                                        .foregroundStyle(.white)
+                                        .padding(16)
+                                }
                             }
-                        }
-                        .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Sizes.sm + DesignSystem.Sizes.xs))
-                        .modifier(designSystem.shadow(for: .neoCard))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-            }
-        }.padding(DesignSystem.Sizes.md)
+            }.padding(DesignSystem.Sizes.md)
+        }
     }
 
     var body: some View {

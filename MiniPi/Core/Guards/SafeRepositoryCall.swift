@@ -55,11 +55,3 @@ func safeRepositoryCall<T>(
         return .failure(ExceptionMapper.mapExceptionToFailure(unknownException))
     }
 }
-
-extension Result {
-    static func capturing<T>(
-        from call: @escaping () async throws -> T
-    ) async -> Result<T> where T == T {
-        return await safeRepositoryCall(call: call)
-    }
-}
